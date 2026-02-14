@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centripetal / Centrifugal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFBF7;
+    --amber: #C4956A;
+    --deep-amber: #A67744;
+    --umber: #3D2B1F;
+    --deep-umber: #2A1D14;
+    --smoke: #8B7D6B;
+    --mist: #D4C9B8;
+    --blush: #E8D5C4;
+    --ink: #1A1210;
+    --faint: rgba(164, 119, 68, 0.08);
+    /* centripetal/centrifugal — magnetic, tension */
+    --force: #8B6B8A;
+    --deep-force: #5E4660;
+    --field: #B8A0B7;
+    --tension: rgba(139, 107, 138, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--mist) transparent;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm-white);
+    color: var(--umber);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .word-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; align-items: center; gap: 2.5rem; padding: 1.2rem 2rem; background: rgba(253, 251, 247, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(139, 107, 138, 0.08); transform: translateY(-100%); transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+  .word-nav.visible { transform: translateY(0); }
+  .word-nav::-webkit-scrollbar { display: none; }
+  .word-nav-item, .word-nav-dot { flex-shrink: 0; }
+  .word-nav-item { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 0.95rem; letter-spacing: 0.1em; color: var(--mist); cursor: pointer; transition: all 0.4s ease; text-decoration: none; position: relative; padding-bottom: 2px; }
+  .word-nav-item:hover { color: var(--force); }
+  .word-nav-item.active { color: var(--deep-umber); }
+  .word-nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: var(--force); }
+  .word-nav-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--mist); flex-shrink: 0; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 2px; background: linear-gradient(90deg, var(--force), var(--deep-force)); z-index: 1000; width: 0%; transition: width 0.1s linear; }
+
+  .nav-dots { position: fixed; right: 2rem; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 1.2rem; }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mist); cursor: pointer; transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); position: relative; }
+  .nav-dot.active { background: var(--force); transform: scale(1.6); }
+  .nav-dot::after { content: attr(data-label); position: absolute; right: 1.4rem; top: 50%; transform: translateY(-50%); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--smoke); white-space: nowrap; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; font-family: 'DM Sans', sans-serif; }
+  .nav-dot:hover::after { opacity: 1; }
+
+  .section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 6rem 2rem; position: relative; }
+  .section-inner { max-width: 680px; width: 100%; opacity: 0; transform: translateY(40px); transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1), transform 1.2s cubic-bezier(0.23, 1, 0.32, 1); }
+  .section-inner.visible { opacity: 1; transform: translateY(0); }
+
+  .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
+  .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, #ddd0dc 0%, var(--warm-white) 60%); z-index: 0; }
+  .hero-particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .particle { position: absolute; border-radius: 50%; background: var(--force); opacity: 0; animation: drift 12s infinite ease-in-out; }
+
+  @keyframes drift {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    20% { opacity: 0.08; }
+    50% { opacity: 0.04; transform: translate(var(--dx), var(--dy)) scale(1); }
+    80% { opacity: 0.06; }
+    100% { opacity: 0; transform: translate(var(--dx2), var(--dy2)) scale(0.3); }
+  }
+
+  .hero-content { position: relative; z-index: 2; }
+  .hero-word { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(2.5rem, 6vw, 5rem); color: var(--umber); letter-spacing: 0.1em; margin-bottom: 0.5rem; opacity: 0; animation: fadeUp 2s 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .hero-pronunciation { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 300; font-size: 1.1rem; color: var(--smoke); letter-spacing: 0.08em; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 2s 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards; display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
+
+  .speak-btn { background: none; border: none; cursor: pointer; padding: 0.3rem; border-radius: 50%; transition: all 0.4s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .speak-btn svg { width: 16px; height: 16px; fill: none; stroke: var(--mist); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.4s ease; }
+  .speak-btn:hover svg { stroke: var(--force); }
+  .speak-btn.playing svg { stroke: var(--force); }
+
+  .hero-line { width: 40px; height: 1px; background: var(--force); margin: 0 auto 2.5rem; opacity: 0; animation: fadeUp 2s 1s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .hero-subtitle { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(1.05rem, 2vw, 1.25rem); color: var(--smoke); line-height: 1.9; max-width: 520px; margin: 0 auto; opacity: 0; animation: fadeUp 2s 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .scroll-cue { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%); opacity: 0; animation: fadeUp 2s 2s cubic-bezier(0.23, 1, 0.32, 1) forwards; z-index: 2; }
+  .scroll-cue span { display: block; width: 1px; height: 40px; background: linear-gradient(to bottom, var(--force), transparent); margin: 0 auto; animation: pulse-line 2.5s infinite ease-in-out; }
+
+  @keyframes pulse-line { 0%, 100% { opacity: 0.3; transform: scaleY(0.6); } 50% { opacity: 0.8; transform: scaleY(1); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
+
+  h2 { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); color: var(--deep-umber); margin-bottom: 2rem; line-height: 1.25; letter-spacing: 0.02em; }
+  .section-label { font-family: 'DM Sans', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--force); margin-bottom: 1.5rem; font-weight: 500; }
+  p { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 1.02rem; line-height: 1.85; color: var(--umber); margin-bottom: 1.4rem; }
+  p:last-child { margin-bottom: 0; }
+  .pullquote { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(1.3rem, 3vw, 1.7rem); line-height: 1.6; color: var(--deep-force); padding: 2rem 0; border-top: 1px solid var(--tension); border-bottom: 1px solid var(--tension); margin: 2.5rem 0; text-align: center; }
+
+  .section-dark { background: var(--deep-umber); color: var(--cream); }
+  .section-dark h2 { color: var(--blush); }
+  .section-dark p { color: var(--mist); }
+  .section-dark .section-label { color: var(--field); }
+  .section-dark .pullquote { color: var(--field); border-color: rgba(139, 107, 138, 0.15); }
+  .section-dark .term-link { color: inherit; border-bottom-color: rgba(139, 107, 138, 0.15); }
+  .section-dark .term-link:hover { color: var(--field); border-bottom-color: rgba(139, 107, 138, 0.4); }
+
+  .section-warm { background: var(--cream); }
+
+  .section-force { background: #2E2436; color: #ddd0dc; }
+  .section-force h2 { color: #ddd0dc; }
+  .section-force p { color: #b8a0b7; }
+  .section-force .section-label { color: var(--field); }
+  .section-force .pullquote { color: var(--field); border-color: rgba(184, 160, 183, 0.15); }
+  .section-force .term-link { color: inherit; border-bottom-color: rgba(184, 160, 183, 0.15); }
+  .section-force .term-link:hover { color: var(--field); border-bottom-color: rgba(184, 160, 183, 0.4); }
+
+  .term-link { color: inherit; border-bottom: 1px solid rgba(139, 107, 138, 0.12); cursor: pointer; transition: border-color 0.4s ease, color 0.4s ease; position: relative; text-decoration: none; }
+  .term-link:hover { color: var(--deep-force); border-bottom-color: rgba(139, 107, 138, 0.4); }
+
+  .term-modal-overlay { position: fixed; inset: 0; background: rgba(26, 18, 16, 0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 500; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+  .term-modal-overlay.active { opacity: 1; pointer-events: all; }
+  .term-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); z-index: 501; background: var(--warm-white); border: 1px solid rgba(139, 107, 138, 0.15); border-radius: 3px; max-width: 480px; width: calc(100% - 3rem); padding: 2.5rem; opacity: 0; pointer-events: none; transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.23, 1, 0.32, 1); }
+  .term-modal.active { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) scale(1); }
+  .term-modal-close { position: absolute; top: 1rem; right: 1.2rem; background: none; border: none; font-size: 1.2rem; color: var(--mist); cursor: pointer; transition: color 0.3s ease; line-height: 1; }
+  .term-modal-close:hover { color: var(--umber); }
+  .term-modal-word { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 1.6rem; color: var(--deep-umber); margin-bottom: 0.3rem; letter-spacing: 0.05em; }
+  .term-modal-pron { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 0.85rem; color: var(--smoke); margin-bottom: 1.2rem; }
+  .term-modal-def { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 0.92rem; line-height: 1.8; color: var(--umber); margin-bottom: 1.2rem; }
+  .term-modal-connections { border-top: 1px solid var(--faint); padding-top: 1rem; margin-top: 0.5rem; }
+  .term-modal-connections-label { font-family: 'DM Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--force); margin-bottom: 0.6rem; font-weight: 500; }
+  .term-modal-connection { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; color: var(--smoke); line-height: 1.7; padding-left: 0.8rem; border-left: 1px solid var(--faint); margin-bottom: 0.5rem; }
+  .term-modal-connection em { color: var(--deep-force); font-style: normal; }
+
+  .finale { text-align: center; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 70%, #ddd0dc 0%, var(--warm-white) 50%); }
+  .finale h2 { font-size: clamp(2rem, 5vw, 3.2rem); margin-bottom: 1.5rem; }
+  .finale p { max-width: 520px; text-align: center; }
+  .finale-line { width: 60px; height: 1px; background: var(--force); margin: 2.5rem auto; }
+  .finale-small { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--smoke); margin-top: 3rem; }
+
+  .colophon { text-align: center; padding: 4rem 2rem; background: var(--warm-white); }
+  .colophon p { font-size: 0.75rem; color: var(--mist); letter-spacing: 0.05em; }
+  .colophon a { color: var(--force); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.3s ease; }
+  .colophon a:hover { border-bottom-color: var(--force); }
+
+  #scent-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.3; }
+
+  @media (max-width: 768px) { .section { padding: 4rem 1.5rem; } .nav-dots { right: 1rem; gap: 1rem; } .nav-dot::after { display: none; } .hero-word { letter-spacing: 0.06em; } .word-nav { gap: 1.2rem; padding: 1rem 1.5rem; } .word-nav-item { font-size: 0.82rem; letter-spacing: 0.06em; } }
+  @media (max-width: 480px) { .section { padding: 3rem 1.2rem; } .nav-dots { display: none; } .word-nav { gap: 0.8rem; } .word-nav-item { font-size: 0.75rem; } }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<canvas id="scent-canvas"></canvas>
+
+<nav class="word-nav" id="wordNav">
+  <a class="word-nav-item" data-word="sillage" href="/">sillage</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="apapachar" href="apapachar.html">apapachar</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ecotone" href="ecotone.html">ecotone</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="crown-shyness" href="crown-shyness.html">crown shyness</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="lacuna" href="lacuna.html">lacuna</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item active" data-word="centripetal">centripetal</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="limning" href="limning.html">limning</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="nepantla" href="nepantla.html">nepantla</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ollin" href="ollin.html">ollin</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="resonance" href="resonance.html">resonance</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="igitwenge" href="igitwenge.html">igitwenge</a>
+</nav>
+
+<nav class="nav-dots" id="navDots">
+  <div class="nav-dot active" data-section="0" data-label="Two Forces"></div>
+  <div class="nav-dot" data-section="1" data-label="The Gravity Well"></div>
+  <div class="nav-dot" data-section="2" data-label="Escape Velocity"></div>
+  <div class="nav-dot" data-section="3" data-label="The Missing Word"></div>
+  <div class="nav-dot" data-section="4" data-label="Directionality"></div>
+</nav>
+
+<div class="term-modal-overlay" id="termOverlay"></div>
+<div class="term-modal" id="termModal">
+  <button class="term-modal-close" id="termClose">&times;</button>
+  <div class="term-modal-word" id="termWord"></div>
+  <div class="term-modal-pron" id="termPron"></div>
+  <div class="term-modal-def" id="termDef"></div>
+  <div class="term-modal-connections" id="termConnections">
+    <div class="term-modal-connections-label">Resonances</div>
+    <div id="termConnectionsList"></div>
+  </div>
+</div>
+
+
+<section class="hero section" data-index="0">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-content">
+    <div class="hero-word">centripetal / centrifugal</div>
+    <div class="hero-pronunciation">
+      /ˌsɛnˈtrɪpɪtəl/ · /ˌsɛnˈtrɪfjʊɡəl/ — Latin, centrum + petere / fugere
+      <button class="speak-btn" id="speakBtn" aria-label="Hear pronunciation">
+        <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </button>
+    </div>
+    <div class="hero-line"></div>
+    <div class="hero-subtitle">
+      To seek the center, or to flee it.<br>
+      Two forces. One pulls inward, creating gravity wells.<br>
+      The other moves outward, toward connection.
+    </div>
+  </div>
+  <div class="scroll-cue"><span></span></div>
+</section>
+
+
+<section class="section" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">I</div>
+    <h2>The gravity well</h2>
+    <p><em>Centripetal</em> &#8212; from Latin <em>centrum</em> + <em>petere</em>, to seek the center. A force that pulls inward. Creates gravity wells. Concentrates everything toward a single point.</p>
+
+    <p>In the context of the attention economy, centripetal is the dominant force. It's not about expanding, exploring, becoming better or more interesting or growing. It's just about keeping more of you. They don't want you to go off and create something beautiful on your own. They want you to stay, to scroll, to consume.</p>
+
+    <div class="pullquote">
+      The centripetal force doesn't want you to leave.<br>
+      It wants to keep drip-feeding you<br>
+      so you don't actually go create anything on your own.
+    </div>
+
+    <p>Caught in the <span class="term-link" data-term="gratification-loop">gratification loop</span>, reaving externalized consequences. Time dissolves, and you've lived through myriad dreams without touching reality. You browse twenty recipes and you're still hungry. The signifier, more valuable than the signified. The salon &#8212; where ideas collided, where strangers became collaborators &#8212; replaced by an infinite feed optimized for time-on-platform.</p>
+  </div>
+</section>
+
+
+<section class="section section-force" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">II</div>
+    <h2>Escape velocity</h2>
+    <p><em>Centrifugal</em> &#8212; from Latin <em>centrum</em> + <em>fugere</em>, to flee the center. A force that moves outward. Decentralized, distributed. Not retention but release. Not a gravity well but a launchpad.</p>
+
+    <p>The opposite of a retention loop is an invitation to participate &#8212; not a notification, not a nudge, not a dark pattern, but escape velocity. An encouragement not just to connect and create but to <em>go</em> &#8212; to explore, to uncover new beauty in the world, to pour more love and joy into it. To grow and tend beautiful things.</p>
+
+    <div class="pullquote">
+      Not a gravity well but a launchpad.<br>
+      Not retention but release.<br>
+      An encouragement to actually make something.
+    </div>
+
+    <p>Imagine a system that is centrifugal rather than centripetal &#8212; one that moves outward, decentralized, rather than pulling everything into a gravity well. Where the trail you leave is legible, and yours. The difference between surveillance and legibility is directional: one extracts value from you, the other reveals value to you.</p>
+  </div>
+</section>
+
+
+<section class="section section-warm" data-index="3">
+  <div class="section-inner">
+    <div class="section-label">III</div>
+    <h2>The word we're still searching for</h2>
+    <p>Centrifugal captures one aspect &#8212; the outward push, the decentralized quality. But it doesn't sound that nice. It's not the refined kind of word. It captures physics but not philosophy. It describes the direction but not the <em>why</em>.</p>
+
+    <p>There's something in the neighborhood that captures the outward, distributed, life-at-the-edges quality more precisely. Maybe it's something in the realm of <span class="term-link" data-term="ecotone">ecotone</span> &#8212; because that's just such a lovely, amazing concept. The tension between two homes as the generative space. The boundary as the place where the most interesting things happen.</p>
+
+    <div class="pullquote">
+      Centrifugal is one. It doesn't sound that nice,<br>
+      but it captures one aspect.<br>
+      The search continues.
+    </div>
+
+    <p>What we're reaching toward: a word that names the entire philosophy. Not just outward force, but the principle that life is richest at edges, that <span class="term-link" data-term="crown-shyness">crown shyness</span> is more beautiful than dominance, that the invitation to create is more powerful than the compulsion to consume. The word exists somewhere. We haven't found it yet.</p>
+  </div>
+</section>
+
+
+<section class="finale section" data-index="4">
+  <div class="section-inner" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="section-label">IV</div>
+    <h2>Directionality</h2>
+    <p>Everything is directional. The centripetal force creates bounded containers &#8212; algorithms that keep you inside, platforms that monetize your attention, systems designed to make you stay. The centrifugal force creates doorways &#8212; tools that launch you outward, invitations that <span class="term-link" data-term="apapachar">embrace with the soul</span>, systems that make you more capable of going off and building something extraordinary.</p>
+
+    <p>The <span class="term-link" data-term="sillage">sillage</span> you leave is shaped by which force you're moving under. Consumed under centripetal gravity, your trail is harvested, flattened, commodified. Moving under centrifugal intention, your trail becomes legible &#8212; a living record of curiosity, creation, and care.</p>
+
+    <div class="finale-line"></div>
+
+    <p>Build launchpads, not gravity wells.<br>Create doorways, not walls.<br>Invitations, not obligations.</p>
+
+    <p style="margin-top: 1.5rem; font-style: italic; font-family: 'Cormorant Garamond', serif; color: var(--smoke); font-size: 0.95rem;">The word we're looking for<br>lives somewhere in the neighborhood of ecotone.<br>We'll know it when we find it.</p>
+
+    <div class="finale-small">digitalsillage.com</div>
+  </div>
+</section>
+
+<footer class="colophon">
+  <p style="font-size: 0.65rem; color: var(--mist); letter-spacing: 0.12em; margin-bottom: 0.8rem;">muse bear inspired</p>
+  <p><a href="https://room527.com" target="_blank">Room 527</a> &#183; 2026</p>
+</footer>
+
+
+<script>
+var terms = {
+  'gratification-loop': { word: 'gratification loop', pron: '', def: 'The short-term cycle of immediate reward that characterizes non-intentional consumption. Very short time horizons \u2014 too short to carry directional gravity. Little buzzing distractions without the inertial value of longer wavelengths.', connections: [{ label: 'Centripetal \u00a7 I', text: 'Time dissolves in the scroll \u2014 always the next thing, right now' }, { label: 'Sillage', text: 'Longer wavelengths carry a purity of resonance that short cycles never can' }] },
+  'ecotone': { word: 'ecotone', pron: '/\u02c8i\u02d0k\u0259\u02ccto\u028an/ \u2014 from Greek oikos + tonos', def: 'The transition zone between two adjacent biomes \u2014 the richest places of biodiversity on the planet. The word we\u2019re reaching toward lives in the neighborhood of ecotone: a concept that names the generative power of boundaries, edges, and the space between systems.', connections: [{ label: 'Centripetal \u00a7 III', text: 'Maybe it\u2019s something in the realm of ecotone \u2014 such a lovely, amazing concept' }, { label: 'Crown shyness', text: 'Life is richest at the boundary where two systems achieve mutual awareness' }] },
+  'crown-shyness': { word: 'crown shyness', pron: '', def: 'The phenomenon where tree canopies maintain a delicate gap between them. Not retreat, but the finest expression of mutual awareness. The centrifugal alternative to dominance: growing toward your edges and then attending to what you find there.', connections: [{ label: 'Centripetal \u00a7 III', text: 'Crown shyness is more beautiful than dominance' }, { label: 'Ecotone', text: 'The gap in the canopy is itself an ecotone \u2014 richest at the boundary' }] },
+  'apapachar': { word: 'apapachar', pron: '/apapa\u02c8t\u0283ar/ \u2014 Nahuatl, via Mexican Spanish', def: 'To embrace with the soul. The centrifugal alternative made tender. Not a push outward but a warm invitation \u2014 doorways, not walls. Care that reaches beyond the surface of contact.', connections: [{ label: 'Centripetal \u00a7 IV', text: 'Invitations that embrace with the soul' }, { label: 'Sillage', text: 'Pour love into the world freely, in a way that can be felt by others' }] },
+  'sillage': { word: 'sillage', pron: '/si\u02d0\u02c8j\u0251\u02d0\u0292/ \u2014 French, noun', def: 'The wafting trail that lingers as you pass through. Your sillage is shaped by which force you\u2019re moving under. Consumed under centripetal gravity, your trail is harvested. Moving under centrifugal intention, your trail becomes legible \u2014 a living record of curiosity, creation, and care.', connections: [{ label: 'Centripetal \u00a7 IV', text: 'The sillage you leave is shaped by which force you\u2019re moving under' }, { label: 'Lacuna', text: 'The commodified trail as shaped absence \u2014 what was lost when your sillage was harvested' }] }
+};
+
+var overlay = document.getElementById('termOverlay');
+var modal = document.getElementById('termModal');
+var termWordEl = document.getElementById('termWord');
+var termPronEl = document.getElementById('termPron');
+var termDefEl = document.getElementById('termDef');
+var termConnectionsListEl = document.getElementById('termConnectionsList');
+var termConnectionsEl = document.getElementById('termConnections');
+
+function openTerm(key) {
+  var t = terms[key]; if (!t) return;
+  termWordEl.textContent = t.word;
+  termPronEl.textContent = t.pron;
+  termPronEl.style.display = t.pron ? 'block' : 'none';
+  termDefEl.textContent = t.def;
+  termConnectionsListEl.innerHTML = '';
+  if (t.connections && t.connections.length) {
+    termConnectionsEl.style.display = 'block';
+    t.connections.forEach(function(c) { var div = document.createElement('div'); div.className = 'term-modal-connection'; div.innerHTML = '<em>' + c.label + '</em> \u2014 ' + c.text; termConnectionsListEl.appendChild(div); });
+  } else { termConnectionsEl.style.display = 'none'; }
+  overlay.classList.add('active'); modal.classList.add('active');
+}
+function closeTerm() { overlay.classList.remove('active'); modal.classList.remove('active'); }
+overlay.addEventListener('click', closeTerm);
+document.getElementById('termClose').addEventListener('click', closeTerm);
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeTerm(); });
+document.querySelectorAll('.term-link').forEach(function(el) { el.addEventListener('click', function(e) { e.preventDefault(); openTerm(el.dataset.term); }); });
+
+var progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', function() { var s = window.scrollY; var d = document.documentElement.scrollHeight - window.innerHeight; progressBar.style.width = (s / d * 100) + '%'; });
+
+var wordNav = document.getElementById('wordNav');
+window.addEventListener('scroll', function() { if (window.scrollY > window.innerHeight * 0.6) wordNav.classList.add('visible'); else wordNav.classList.remove('visible'); });
+
+var revealObserver = new IntersectionObserver(function(entries) { entries.forEach(function(entry) { if (entry.isIntersecting) entry.target.classList.add('visible'); }); }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+document.querySelectorAll('.section-inner').forEach(function(el) { revealObserver.observe(el); });
+
+var sections = document.querySelectorAll('.section');
+var dots = document.querySelectorAll('.nav-dot');
+var sectionObserver = new IntersectionObserver(function(entries) { entries.forEach(function(entry) { if (entry.isIntersecting) { var index = entry.target.dataset.index; dots.forEach(function(d) { d.classList.remove('active'); }); if (dots[index]) dots[index].classList.add('active'); } }); }, { threshold: 0.4 });
+sections.forEach(function(s) { sectionObserver.observe(s); });
+dots.forEach(function(dot) { dot.addEventListener('click', function() { var idx = dot.dataset.section; if (sections[idx]) sections[idx].scrollIntoView({ behavior: 'smooth' }); }); });
+
+var particleContainer = document.getElementById('heroParticles');
+for (var i = 0; i < 18; i++) { var p = document.createElement('div'); p.className = 'particle'; var size = 3 + Math.random() * 8; p.style.width = size + 'px'; p.style.height = size + 'px'; p.style.left = (10 + Math.random() * 80) + '%'; p.style.top = (10 + Math.random() * 80) + '%'; p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px'); p.style.setProperty('--dy', (Math.random() * 80 - 40) + 'px'); p.style.setProperty('--dx2', (Math.random() * 120 - 60) + 'px'); p.style.setProperty('--dy2', (Math.random() * 120 - 60) + 'px'); p.style.animationDelay = (Math.random() * 10) + 's'; p.style.animationDuration = (8 + Math.random() * 8) + 's'; particleContainer.appendChild(p); }
+
+var canvas = document.getElementById('scent-canvas');
+var ctx = canvas.getContext('2d'); var w, h; var trails = [];
+function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; } resize(); window.addEventListener('resize', resize);
+function Trail() { this.reset(); }
+Trail.prototype.reset = function() { this.x = Math.random() * w; this.y = Math.random() * h; this.vx = (Math.random() - 0.5) * 0.2; this.vy = (Math.random() - 0.5) * 0.2; this.life = 0; this.maxLife = 400 + Math.random() * 400; this.radius = 80 + Math.random() * 120; };
+Trail.prototype.update = function() { this.x += this.vx; this.y += this.vy; this.life++; if (this.life > this.maxLife) this.reset(); };
+Trail.prototype.draw = function() { var progress = this.life / this.maxLife; var alpha = Math.sin(progress * Math.PI) * 0.018; var gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius); gradient.addColorStop(0, 'rgba(139, 107, 138, ' + alpha + ')'); gradient.addColorStop(1, 'rgba(139, 107, 138, 0)'); ctx.fillStyle = gradient; ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2); };
+for (var j = 0; j < 5; j++) { var t = new Trail(); t.life = Math.random() * t.maxLife; trails.push(t); }
+function animate() { ctx.clearRect(0, 0, w, h); trails.forEach(function(t) { t.update(); t.draw(); }); requestAnimationFrame(animate); } animate();
+
+document.getElementById('speakBtn').addEventListener('click', function() {
+  var btn = this;
+  btn.classList.add('playing');
+  var audio = new Audio('audio/centripetal.mp3');
+  audio.addEventListener('canplaythrough', function() { audio.play(); });
+  audio.addEventListener('ended', function() { btn.classList.remove('playing'); });
+  audio.addEventListener('error', function() {
+    var u1 = new SpeechSynthesisUtterance('centripetal');
+    u1.lang = 'en-US'; u1.rate = 0.75;
+    var u2 = new SpeechSynthesisUtterance('centrifugal');
+    u2.lang = 'en-US'; u2.rate = 0.75;
+    u2.onend = function() { btn.classList.remove('playing'); };
+    u1.onend = function() { setTimeout(function() { speechSynthesis.speak(u2); }, 400); };
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u1);
+  });
+});
+
+// Auto-scroll active word into view in nav
+var wordNav = document.getElementById('wordNav');
+var activeWord = wordNav && wordNav.querySelector('.word-nav-item.active');
+if (activeWord) {
+  setTimeout(function() {
+    activeWord.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, 100);
+}
+</script>
+
+<script>
+window.pageTranslations = {
+  es: {
+    heroSubtitle: 'Buscar el centro, o huir de \u00e9l.<br>Dos fuerzas. Una tira hacia adentro, creando pozos de gravedad.<br>La otra se mueve hacia afuera, hacia la conexi\u00f3n.',
+    sections: {
+      '1': {
+        h: 'El pozo de gravedad',
+        p: [
+          '<em>Centr\u00edpeta</em> \u2014 del lat\u00edn <em>centrum</em> + <em>petere</em>, buscar el centro. Una fuerza que tira hacia adentro. Crea pozos de gravedad. Concentra todo hacia un solo punto.',
+          'En el contexto de la econom\u00eda de la atenci\u00f3n, la fuerza centr\u00edpeta es la dominante. No se trata de expandir, explorar, volverse mejor o m\u00e1s interesante o crecer. Se trata simplemente de retener m\u00e1s de ti. No quieren que te vayas a crear algo hermoso por tu cuenta. Quieren que te quedes, que sigas deslizando, que consumas.',
+          'Atrapado en el <span class="term-link" data-term="gratification-loop">ciclo de gratificaci\u00f3n</span>, cosechando consecuencias externalizadas. El tiempo se disuelve, y has vivido innumerables sue\u00f1os sin tocar la realidad. Navegas veinte recetas y sigues con hambre. El significante, m\u00e1s valioso que el significado. El sal\u00f3n \u2014 donde las ideas colisionaban, donde los desconocidos se volv\u00edan colaboradores \u2014 reemplazado por un feed infinito optimizado para el tiempo-en-plataforma.'
+        ],
+        q: 'La fuerza centr\u00edpeta no quiere que te vayas.<br>Quiere seguir aliment\u00e1ndote gota a gota<br>para que nunca vayas a crear algo por tu cuenta.'
+      },
+      '2': {
+        h: 'Velocidad de escape',
+        p: [
+          '<em>Centr\u00edfuga</em> \u2014 del lat\u00edn <em>centrum</em> + <em>fugere</em>, huir del centro. Una fuerza que se mueve hacia afuera. Descentralizada, distribuida. No retenci\u00f3n sino liberaci\u00f3n. No un pozo de gravedad sino una plataforma de lanzamiento.',
+          'Lo opuesto a un ciclo de retenci\u00f3n es una invitaci\u00f3n a participar \u2014 no una notificaci\u00f3n, no un empujoncito, no un patr\u00f3n oscuro, sino velocidad de escape. Un est\u00edmulo no solo para conectar y crear sino para <em>ir</em> \u2014 explorar, descubrir nueva belleza en el mundo, verter m\u00e1s amor y alegr\u00eda en \u00e9l. Crecer y cultivar cosas hermosas.',
+          'Imagina un sistema centr\u00edfugo en lugar de centr\u00edpeto \u2014 uno que se mueva hacia afuera, descentralizado, en vez de atraer todo hacia un pozo de gravedad. Donde la estela que dejas sea legible, y tuya. La diferencia entre vigilancia y legibilidad es direccional: una extrae valor de ti, la otra te revela valor a ti.'
+        ],
+        q: 'No un pozo de gravedad sino una plataforma de lanzamiento.<br>No retenci\u00f3n sino liberaci\u00f3n.<br>Una invitaci\u00f3n a realmente crear algo.'
+      },
+      '3': {
+        h: 'La palabra que a\u00fan buscamos',
+        p: [
+          'Centr\u00edfuga captura un aspecto \u2014 el empuje hacia afuera, la cualidad descentralizada. Pero no suena tan bien. No es el tipo de palabra refinada. Captura la f\u00edsica pero no la filosof\u00eda. Describe la direcci\u00f3n pero no el <em>por qu\u00e9</em>.',
+          'Hay algo en esa vecindad que captura con m\u00e1s precisi\u00f3n la cualidad exterior, distribuida, de vida-en-los-bordes. Quiz\u00e1 sea algo del reino del <span class="term-link" data-term="ecotone">ecotono</span> \u2014 porque es un concepto tan hermoso, tan asombroso. La tensi\u00f3n entre dos hogares como espacio generativo. El l\u00edmite como el lugar donde suceden las cosas m\u00e1s interesantes.',
+          'Hacia lo que nos estiramos: una palabra que nombre toda la filosof\u00eda. No solo fuerza hacia afuera, sino el principio de que la vida es m\u00e1s rica en los bordes, que la <span class="term-link" data-term="crown-shyness">timidez de copas</span> es m\u00e1s hermosa que la dominaci\u00f3n, que la invitaci\u00f3n a crear es m\u00e1s poderosa que la compulsi\u00f3n a consumir. La palabra existe en alg\u00fan lugar. A\u00fan no la hemos encontrado.'
+        ],
+        q: 'Centr\u00edfuga es una. No suena tan bien,<br>pero captura un aspecto.<br>La b\u00fasqueda contin\u00faa.'
+      },
+      '4': {
+        h: 'Direccionalidad',
+        p: [
+          'Todo es direccional. La fuerza centr\u00edpeta crea contenedores cerrados \u2014 algoritmos que te mantienen dentro, plataformas que monetizan tu atenci\u00f3n, sistemas dise\u00f1ados para que te quedes. La fuerza centr\u00edfuga crea puertas \u2014 herramientas que te lanzan hacia afuera, invitaciones que <span class="term-link" data-term="apapachar">abrazan con el alma</span>, sistemas que te hacen m\u00e1s capaz de ir a construir algo extraordinario.',
+          'El <span class="term-link" data-term="sillage">sillage</span> que dejas est\u00e1 moldeado por la fuerza bajo la cual te mueves. Consumido bajo la gravedad centr\u00edpeta, tu estela es cosechada, aplanada, mercantilizada. Movi\u00e9ndote bajo intenci\u00f3n centr\u00edfuga, tu estela se vuelve legible \u2014 un registro vivo de curiosidad, creaci\u00f3n y cuidado.',
+          'Construye plataformas de lanzamiento, no pozos de gravedad.<br>Crea puertas, no muros.<br>Invitaciones, no obligaciones.',
+          'La palabra que buscamos<br>vive en alg\u00fan lugar en la vecindad del ecotono.<br>La reconoceremos cuando la encontremos.'
+        ],
+        q: null
+      }
+    }
+  },
+  rw: {
+    heroSubtitle: 'Gushaka hagati, cyangwa guhungira kure yaho.<br>Imbaraga ebyiri. Imwe ikurura imbere, ishyiraho imyobo y\u2019imbaraga.<br>Indi igenda hanze, igana aho guhuza.',
+    sections: {
+      '1': {
+        h: 'Umwobo w\u2019imbaraga',
+        p: [
+          '<em>Centripetal</em> \u2014 mu kilatini <em>centrum</em> + <em>petere</em>, gushaka hagati. Imbaraga ikurura imbere. Ishyiraho imyobo y\u2019imbaraga. Iteraniriza byose ku kintu kimwe.',
+          'Mu buryo bw\u2019ubukungu bw\u2019itegereza, imbaraga ya centripetal ni yo itegeka. Ntabwo ari ugukura, gushakisha, kuba byiza cyangwa bishimishije kurushaho cyangwa gukura. Ni ugufata byinshi byawe gusa. Ntibashaka ko ugenda ukihimbira ikintu cyiza. Bashaka ko uguma, ukomeza gusura, ugakoresha.',
+          'Ufashwe mu <span class="term-link" data-term="gratification-loop">muzunguruko w\u2019ishimwe ry\u2019ako kanya</span>, usarura ingaruka zoherejwe hanze. Igihe kirayoyoka, kandi wabayeho mu nzozi nyinshi utakoze ku by\u2019ukuri. Usura amafunguro makuru mirongo ibiri ukaba ukiri ushonje. Ikimenyetso, gifite agaciro kuruta icyo gisobanura. Isalo \u2014 aho ibitekerezo byahuriranaga, aho abatazanye babaga abakorana \u2014 byasimbuwe n\u2019ururango rudashira rwagenewe igihe-ku-murongo.'
+        ],
+        q: 'Imbaraga ya centripetal ntishaka ko ugenda.<br>Ishaka gukomeza ikugaburira intete ku ntete<br>kugira ngo ntuzigere ujya gukora ikintu ku giti cyawe.'
+      },
+      '2': {
+        h: 'Umuvuduko wo gusohotsa',
+        p: [
+          '<em>Centrifugal</em> \u2014 mu kilatini <em>centrum</em> + <em>fugere</em>, guhunga hagati. Imbaraga igenda hanze. Idacentraliziwe, ikwirakwijwe. Si ugufata ahubwo ni ukurekura. Si umwobo w\u2019imbaraga ahubwo ni urubuga rwo gusimbuka.',
+          'Ikinyuranyo cy\u2019umuzunguruko wo gufata ni ubutumire bwo kugira uruhare \u2014 si kumenyesha, si gusunika, si uburyo bubi, ahubwo ni umuvuduko wo gusohotsa. Gutera inkunga si gusa yo guhuza no gukora ahubwo ni ugo<em>genda</em> \u2014 gushakisha, gushaka ubwiza bushya ku isi, gusuka urukundo n\u2019ibyishimo byinshi muri yo. Gukura no guhinga ibintu byiza.',
+          'Tekereza sisitemu ya centrifugal aho kuba centripetal \u2014 imwe igenda hanze, idacentraliziwe, aho gukurura byose mu mwobo w\u2019imbaraga. Aho umuyonga usiga usomeka, kandi ukaba uwawe. Itandukaniro ry\u2019igenzura n\u2019ubusomeka ni iry\u2019icyerekezo: kimwe gikura agaciro muri wowe, ikindi kikwereka agaciro.'
+        ],
+        q: 'Si umwobo w\u2019imbaraga ahubwo ni urubuga rwo gusimbuka.<br>Si ugufata ahubwo ni ukurekura.<br>Ubutumire bwo koko gukora ikintu.'
+      },
+      '3': {
+        h: 'Ijambo turacyashaka',
+        p: [
+          'Centrifugal ifata igice kimwe \u2014 gusunikira hanze, imiterere idacentraliziwe. Ariko ntishimisha mu kurivuga. Si ijambo ry\u2019ubwoko bwiza. Rifata fiziki ariko ntirufata filozofi. Risobanura icyerekezo ariko ntirisobanure <em>impamvu</em>.',
+          'Hari ikintu mu bubanyi gifata neza kurushaho imiterere y\u2019inyuma, ikwirakwijwe, ubuzima-ku-mpera. Birashoboka ko ari ikintu mu bwami bwa <span class="term-link" data-term="ecotone">ecotone</span> \u2014 kuko ari igitekerezo cyiza cyane. Imbaraga z\u2019inzu ebyiri nk\u2019umwanya w\u2019iterambere. Urubibe nk\u2019ahantu ibintu bishimishije cyane bibera.',
+          'Icyo tugana: ijambo rivuga filozofi yose. Si imbaraga igenda hanze gusa, ahubwo ni umusingi w\u2019uko ubuzima burushije ubukire ku mpera, ko <span class="term-link" data-term="crown-shyness">isoni z\u2019amashami</span> ari byiza kuruta gutegeka, ko ubutumire bwo gukora buruta imbaraga zo gukoresha. Ijambo rihari ahantu runaka. Turarihishe.'
+        ],
+        q: 'Centrifugal ni rimwe. Ntishimisha mu kurivuga,<br>ariko rifata igice kimwe.<br>Gushakisha birakomeza.'
+      },
+      '4': {
+        h: 'Icyerekezo',
+        p: [
+          'Byose bifite icyerekezo. Imbaraga ya centripetal ishyiraho ibikoresho bifunze \u2014 algorithme zigufata imbere, ibirindiro byinjiza amafaranga ku mwitegereze wawe, sisitemu zakozwe kugira ngo ugume. Imbaraga ya centrifugal ishyiraho inzugi \u2014 ibikoresho bigusimbukisha hanze, ubutumire <span class="term-link" data-term="apapachar">bufata umutima</span>, sisitemu zigufasha kurushaho kujya kubaka ikintu kidasanzwe.',
+          '<span class="term-link" data-term="sillage">Sillage</span> usiga ishushanywa n\u2019imbaraga ugenderaho. Ugakoreshewe munsi y\u2019imbaraga ya centripetal, umuyonga wawe usarurwa, usenywa, ugacuruzwa. Ugenda mu cyerekezo cya centrifugal, umuyonga wawe uboneka \u2014 inyandiko nzima y\u2019ubushakashatsi, gukora, no kwita ku bandi.',
+          'Kubaka inzugi zo gusimbuka, si imyobo y\u2019imbaraga.<br>Gukora inzugi, si inkuta.<br>Ubutumire, si inshingano.',
+          'Ijambo dushaka<br>riba ahantu hafi ya ecotone.<br>Tuzarimanya iyo turibonye.'
+        ],
+        q: null
+      }
+    }
+  }
+};
+</script>
+<script src="i18n.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crown Shyness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFBF7;
+    --amber: #C4956A;
+    --deep-amber: #A67744;
+    --umber: #3D2B1F;
+    --deep-umber: #2A1D14;
+    --smoke: #8B7D6B;
+    --mist: #D4C9B8;
+    --blush: #E8D5C4;
+    --ink: #1A1210;
+    --faint: rgba(164, 119, 68, 0.08);
+    /* crown shyness — canopy greens, sky blues */
+    --canopy: #4A6B5A;
+    --deep-canopy: #2D4A3A;
+    --sky: #7BA4B8;
+    --light-gap: rgba(123, 164, 184, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--mist) transparent;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm-white);
+    color: var(--umber);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ====== WORD NAV ====== */
+  .word-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+    padding: 1.2rem 2rem;
+    background: rgba(253, 251, 247, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--light-gap);
+    transform: translateY(-100%);
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .word-nav.visible { transform: translateY(0); }
+
+  .word-nav-item {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+    color: var(--mist);
+    cursor: pointer;
+    transition: all 0.4s ease;
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 2px;
+  }
+
+  .word-nav-item:hover { color: var(--canopy); }
+
+  .word-nav-item.active { color: var(--deep-umber); }
+
+  .word-nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--canopy);
+  }
+
+  .word-nav-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--mist);
+    flex-shrink: 0;
+  }
+
+  /* ====== SCROLL PROGRESS ====== */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--canopy), var(--sky));
+    z-index: 1000;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* ====== NAV DOTS ====== */
+  .nav-dots {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .nav-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mist);
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+  }
+
+  .nav-dot.active {
+    background: var(--canopy);
+    transform: scale(1.6);
+  }
+
+  .nav-dot::after {
+    content: attr(data-label);
+    position: absolute;
+    right: 1.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .nav-dot:hover::after { opacity: 1; }
+
+  /* ====== SECTIONS ====== */
+  .section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem;
+    position: relative;
+  }
+
+  .section-inner {
+    max-width: 680px;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1),
+                transform 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .section-inner.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ====== HERO ====== */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 30%, #d4e6dc 0%, var(--warm-white) 60%);
+    z-index: 0;
+  }
+
+  .hero-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--canopy);
+    opacity: 0;
+    animation: drift 12s infinite ease-in-out;
+  }
+
+  @keyframes drift {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    20% { opacity: 0.1; }
+    50% { opacity: 0.05; transform: translate(var(--dx), var(--dy)) scale(1); }
+    80% { opacity: 0.08; }
+    100% { opacity: 0; transform: translate(var(--dx2), var(--dy2)) scale(0.3); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-word {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(3rem, 7vw, 6rem);
+    color: var(--umber);
+    letter-spacing: 0.12em;
+    margin-bottom: 0.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .hero-pronunciation {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 1.1rem;
+    color: var(--smoke);
+    letter-spacing: 0.08em;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .hero-line {
+    width: 40px;
+    height: 1px;
+    background: var(--canopy);
+    margin: 0 auto 2.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .hero-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    color: var(--smoke);
+    line-height: 1.9;
+    max-width: 520px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeUp 2s 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    animation: fadeUp 2s 2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    z-index: 2;
+  }
+
+  .scroll-cue span {
+    display: block;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--canopy), transparent);
+    margin: 0 auto;
+    animation: pulse-line 2.5s infinite ease-in-out;
+  }
+
+  @keyframes pulse-line {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+    50% { opacity: 0.8; transform: scaleY(1); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(25px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ====== TYPOGRAPHY ====== */
+  h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    color: var(--deep-umber);
+    margin-bottom: 2rem;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+  }
+
+  .section-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--canopy);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  p {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 1.02rem;
+    line-height: 1.85;
+    color: var(--umber);
+    margin-bottom: 1.4rem;
+  }
+
+  p:last-child { margin-bottom: 0; }
+
+  .pullquote {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.3rem, 3vw, 1.7rem);
+    line-height: 1.6;
+    color: var(--deep-canopy);
+    padding: 2rem 0;
+    border-top: 1px solid var(--light-gap);
+    border-bottom: 1px solid var(--light-gap);
+    margin: 2.5rem 0;
+    text-align: center;
+  }
+
+  /* ====== IMAGE BREAK ====== */
+  .image-break {
+    width: 100%;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .image-break-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .image-break img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 2px;
+    opacity: 0;
+    transform: scale(0.98);
+    transition: opacity 1.5s ease, transform 1.5s ease;
+  }
+
+  .image-break img.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .image-caption {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 300;
+    color: var(--smoke);
+    letter-spacing: 0.04em;
+    text-align: center;
+    padding: 1.2rem 1rem 3rem;
+    line-height: 1.6;
+  }
+
+  /* ====== DARK SECTION ====== */
+  .section-dark {
+    background: var(--deep-umber);
+    color: var(--cream);
+  }
+
+  .section-dark h2 { color: var(--blush); }
+  .section-dark p { color: var(--mist); }
+  .section-dark .section-label { color: var(--sky); }
+  .section-dark .pullquote {
+    color: var(--sky);
+    border-color: rgba(123, 164, 184, 0.15);
+  }
+
+  /* ====== WARM SECTION ====== */
+  .section-warm {
+    background: var(--cream);
+  }
+
+  /* ====== CANOPY SECTION ====== */
+  .section-canopy {
+    background: #1E3328;
+    color: #d4e6dc;
+  }
+
+  .section-canopy h2 { color: #d4e6dc; }
+  .section-canopy p { color: #a8c4b5; }
+  .section-canopy .section-label { color: var(--sky); }
+  .section-canopy .pullquote {
+    color: var(--sky);
+    border-color: rgba(123, 164, 184, 0.12);
+  }
+
+  /* ====== TERM LINKS ====== */
+  .term-link {
+    color: inherit;
+    border-bottom: 1px solid rgba(74, 107, 90, 0.12);
+    cursor: pointer;
+    transition: border-color 0.4s ease, color 0.4s ease;
+    position: relative;
+    text-decoration: none;
+  }
+
+  .term-link:hover {
+    color: var(--deep-canopy);
+    border-bottom-color: rgba(74, 107, 90, 0.4);
+  }
+
+  /* ====== TERM MODAL ====== */
+  .term-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 18, 16, 0.4);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .term-modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .term-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    z-index: 501;
+    background: var(--warm-white);
+    border: 1px solid rgba(74, 107, 90, 0.15);
+    border-radius: 3px;
+    max-width: 480px;
+    width: calc(100% - 3rem);
+    padding: 2.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .term-modal.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .term-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--mist);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    line-height: 1;
+  }
+
+  .term-modal-close:hover { color: var(--umber); }
+
+  .term-modal-word {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 1.6rem;
+    color: var(--deep-umber);
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.05em;
+  }
+
+  .term-modal-pron {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--smoke);
+    margin-bottom: 1.2rem;
+  }
+
+  .term-modal-def {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: var(--umber);
+    margin-bottom: 1.2rem;
+  }
+
+  .term-modal-connections {
+    border-top: 1px solid var(--faint);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .term-modal-connections-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--canopy);
+    margin-bottom: 0.6rem;
+    font-weight: 500;
+  }
+
+  .term-modal-connection {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: var(--smoke);
+    line-height: 1.7;
+    padding-left: 0.8rem;
+    border-left: 1px solid var(--faint);
+    margin-bottom: 0.5rem;
+  }
+
+  .term-modal-connection em {
+    color: var(--deep-canopy);
+    font-style: normal;
+  }
+
+  /* ====== FINALE ====== */
+  .finale {
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 50% 70%, #d4e6dc 0%, var(--warm-white) 50%);
+  }
+
+  .finale h2 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    margin-bottom: 1.5rem;
+  }
+
+  .finale p {
+    max-width: 520px;
+    text-align: center;
+  }
+
+  .finale-line {
+    width: 60px;
+    height: 1px;
+    background: var(--canopy);
+    margin: 2.5rem auto;
+  }
+
+  .finale-small {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    margin-top: 3rem;
+  }
+
+  /* ====== COLOPHON ====== */
+  .colophon {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--warm-white);
+  }
+
+  .colophon p {
+    font-size: 0.75rem;
+    color: var(--mist);
+    letter-spacing: 0.05em;
+  }
+
+  .colophon a {
+    color: var(--canopy);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+
+  .colophon a:hover { border-bottom-color: var(--canopy); }
+
+  /* ====== CANVAS ====== */
+  #scent-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.3;
+  }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 768px) {
+    .section { padding: 4rem 1.5rem; }
+    .nav-dots { right: 1rem; gap: 1rem; }
+    .nav-dot::after { display: none; }
+    .hero-word { letter-spacing: 0.08em; }
+    .word-nav { gap: 1.2rem; padding: 1rem 1rem; }
+    .word-nav-item { font-size: 0.82rem; letter-spacing: 0.06em; }
+  }
+
+  @media (max-width: 480px) {
+    .section { padding: 3rem 1.2rem; }
+    .nav-dots { display: none; }
+    .word-nav { gap: 0.8rem; }
+    .word-nav-item { font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<canvas id="scent-canvas"></canvas>
+
+<!-- ====== WORD NAV ====== -->
+<nav class="word-nav" id="wordNav">
+  <a class="word-nav-item" data-word="sillage" href="/">sillage</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="apapachar" href="apapachar.html">apapachar</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ecotone" href="ecotone.html">ecotone</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item active" data-word="crown-shyness">crown shyness</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="lacuna" href="lacuna.html">lacuna</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="centripetal" href="centripetal.html">centripetal</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="limning" href="limning.html">limning</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="nepantla" href="nepantla.html">nepantla</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ollin" href="ollin.html">ollin</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="resonance" href="resonance.html">resonance</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="igitwenge" href="igitwenge.html">igitwenge</a>
+</nav>
+
+<!-- ====== NAV DOTS ====== -->
+<nav class="nav-dots" id="navDots">
+  <div class="nav-dot active" data-section="0" data-label="Crown Shyness"></div>
+  <div class="nav-dot" data-section="1" data-label="The Gap"></div>
+  <div class="nav-dot" data-section="2" data-label="The Sensing"></div>
+  <div class="nav-dot" data-section="3" data-label="Growing Out"></div>
+  <div class="nav-dot" data-section="4" data-label="Equilibrium"></div>
+</nav>
+
+<!-- ====== TERM MODAL ====== -->
+<div class="term-modal-overlay" id="termOverlay"></div>
+<div class="term-modal" id="termModal">
+  <button class="term-modal-close" id="termClose">&times;</button>
+  <div class="term-modal-word" id="termWord"></div>
+  <div class="term-modal-pron" id="termPron"></div>
+  <div class="term-modal-def" id="termDef"></div>
+  <div class="term-modal-connections" id="termConnections">
+    <div class="term-modal-connections-label">Resonances</div>
+    <div id="termConnectionsList"></div>
+  </div>
+</div>
+
+
+<!-- ======== HERO ======== -->
+<section class="hero section" data-index="0">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-content">
+    <div class="hero-word">crown shyness</div>
+    <div class="hero-pronunciation">a phenomenon in which tree crowns do not touch</div>
+    <div class="hero-line"></div>
+    <div class="hero-subtitle">
+      Channels of light overhead<br>
+      where neighboring canopies pause<br>
+      before touching.
+    </div>
+  </div>
+  <div class="scroll-cue"><span></span></div>
+</section>
+
+
+<!-- ======== IMAGE ======== -->
+<section class="image-break">
+  <div class="image-break-inner">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/5/5a/River_of_Blue.jpg" alt="Crown shyness — channels of sky visible between tree canopies that do not touch" loading="lazy">
+    <div class="image-caption">Channels of sky between tree crowns that grow toward each other but do not touch. <span style="opacity: 0.5;">Photo via Wikimedia Commons, CC BY-SA 4.0</span></div>
+  </div>
+</section>
+
+
+<!-- ======== I. THE GAP ======== -->
+<section class="section" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">I</div>
+    <h2>The gap that isn't empty</h2>
+    <p>In a forest canopy, neighboring trees maintain a delicate gap between their crowns. Look up and you see it: channels of light tracing the boundaries between one tree and the next. A puzzle-like pattern — each crown fitting against its neighbors without touching.</p>
+
+    <p>First described in the 1920s. Named by an Australian forester studying eucalyptus in 1955 who saw something that looked, from below, like politeness. <em>Crown shyness.</em></p>
+
+    <div class="pullquote">
+      The gap isn't absence. It isn't retreat.<br>
+      It's the finest expression of mutual awareness<br>
+      between two living systems.
+    </div>
+
+    <p>Not an inert boundary drawn on a map. A living space, maintained by two organisms that are each growing outward, reaching, and then — pause. Attunement. The gap is itself an <span class="term-link" data-term="ecotone">ecotone</span>. The richest zone.</p>
+
+    <p>Think of it the way you might think of a conversation between two people who truly listen. Neither dominates. Neither disappears. Each grows toward the other, and the space between them becomes the richest part — the place where understanding lives.</p>
+  </div>
+</section>
+
+
+<!-- ======== II. THE SENSING ======== -->
+<section class="section section-canopy" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">II</div>
+    <h2>How trees know</h2>
+    <p>The science is still being resolved, but there are at least two forces at work. The first is physical: branches in wind collide with their neighbors, and the repeated abrasion prunes the growing tips. The more flexible the branch, the wider the gap — each tree giving the other room proportional to how much they move.</p>
+
+    <p>The second is subtler. Trees can sense the proximity of their neighbors by detecting backscattered light — specifically, shifts in the red to far-red spectrum that signal another canopy nearby. Light-receptor proteins called <span class="term-link" data-term="phytochrome">phytochromes</span> send out an alert: something is close. Stop growing that direction.</p>
+
+    <div class="pullquote">
+      Trees can detect the presence of neighbors<br>
+      before being shaded by them.
+    </div>
+
+    <p>Not just collision and retreat. Active sensing. A botanical awareness that reaches out, encounters another living system, and adjusts — continuously, in real time, across the whole surface of the canopy.</p>
+  </div>
+</section>
+
+
+<!-- ======== III. GROWING OUT ======== -->
+<section class="section section-warm" data-index="3">
+  <div class="section-inner">
+    <div class="section-label">III</div>
+    <h2>You just keep growing out</h2>
+    <p>This is the part that matters most. Each canopy isn't withdrawing. It's growing outward — <span class="term-link" data-term="limning">limning</span> its boundary — until it encounters the other. Not a defensive crouch but an expansive reach that finds its limit through contact.</p>
+
+    <p>You just keep growing out, keep growing out, until you encounter that tidal zone between the two. The dance of getting to know, of feeling out the whole surface boundary. Not a static line but a living negotiation maintained across years, across seasons, across every gust of wind.</p>
+
+    <div class="pullquote">
+      Not avoidance, but the precise equilibrium<br>
+      where two living systems have each found<br>
+      their mutual limit.
+    </div>
+
+    <p>And from both sides, independently, the same line is drawn. Both canopies, <span class="term-link" data-term="dual-origin">limning outward from their interiors</span>, arrive at matching boundaries. Like surveying a property line from both sides and getting the same answer. The resolution is maximized. The boundary is healthy.</p>
+  </div>
+</section>
+
+
+<!-- ======== IV. THE EQUILIBRIUM ======== -->
+<section class="finale section" data-index="4">
+  <div class="section-inner" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="section-label">IV</div>
+    <h2>The visible result</h2>
+    <p>Crown shyness is what ecotonal equilibrium looks like when you can see it. The abstract principle — two systems pressing toward each other, receding, defining each other's edges — made visible in wood and leaf and light.</p>
+
+    <p>The gap between canopies is itself the ecotone. And the act of growing toward it, of reaching and sensing and adjusting — that's <span class="term-link" data-term="limning">limning</span>. And the power at the edge, the finest resolution where the organism meets the world — that's where the richest information lives.</p>
+
+    <div class="finale-line"></div>
+
+    <p>Look up. The channels of light are a map of mutual awareness. Each one a record of two living systems that grew toward each other with enough sensitivity to stop — not in fear, but in recognition.</p>
+
+    <p style="margin-top: 1.5rem; font-style: italic; font-family: 'Cormorant Garamond', serif; color: var(--smoke); font-size: 0.95rem;">The furthest branch tip leaf reaching out,<br>dancing in harmony and unison with the other tree —<br>they both are leaving that one little gap.</p>
+
+    <div class="finale-small">digitalsillage.com</div>
+  </div>
+</section>
+
+<footer class="colophon">
+  <p style="font-size: 0.65rem; color: var(--mist); letter-spacing: 0.12em; margin-bottom: 0.8rem;">muse bear inspired</p>
+  <p><a href="https://room527.com" target="_blank">Room 527</a> · 2026</p>
+</footer>
+
+
+<script>
+const terms = {
+  'ecotone': {
+    word: 'ecotone',
+    pron: '/ˈiːkəˌtoʊn/ — from Greek oikos + tonos',
+    def: 'The tension between two homes. The transition zone between two adjacent biomes — the tidal zone, the mangrove, the estuary. Not dead space but where life is richest. Where biodiversity peaks. The resolution of life at its finest, expressed as diversity.',
+    connections: [
+      { label: 'Crown shyness § I', text: 'The gap between canopies is itself an ecotone — the richest zone' },
+      { label: 'Sillage', text: 'Your sillage is most potent when most refined — operating at the highest resolution' }
+    ]
+  },
+  'limning': {
+    word: 'limning',
+    pron: '/ˈlɪmɪŋ/ — from Latin luminare, "to illuminate"',
+    def: 'To trace the outline of something, to depict by drawing the edge. Reaching out to fill all the little pieces, to probe all the edges, to get the highest resolution at the boundary. Not just between self and other, but between self and another active being. The dance of getting to know, of feeling out the whole surface boundary.',
+    connections: [
+      { label: 'Crown shyness § III', text: 'Each canopy limning outward until it encounters the other — not retreat but expansive reach' },
+      { label: 'Ecotone', text: 'Both systems limning outward from their interiors, arriving at matching boundaries' }
+    ]
+  },
+  'dual-origin': {
+    word: 'dual-origin verification',
+    pron: '',
+    def: 'Both systems describe the boundary independently and arrive at the same line. Like surveying a property line from both sides and getting the same answer. If those descriptions match — edges meet without overlap and without gap — the boundary is verified. The resolution is maximized and the ecotone is healthy.',
+    connections: [
+      { label: 'Crown shyness § III', text: 'Both canopies arrive at matching boundaries independently' },
+      { label: 'Ecotone', text: 'The most powerful signal that a boundary is correct' }
+    ]
+  },
+  'phytochrome': {
+    word: 'phytochrome',
+    pron: '/ˈfaɪtoʊˌkroʊm/ — Greek phyto (plant) + chroma (color)',
+    def: 'Light-receptor proteins in plants that detect shifts in the red to far-red light spectrum. When a neighboring canopy is near, it changes the quality of light reaching the tree — a botanical early-warning system. The tree senses the presence of its neighbor before being shaded by it, and redirects growth accordingly. A form of awareness that operates entirely through light.',
+    connections: [
+      { label: 'Crown shyness § II', text: 'Trees detect neighbors before being shaded — active sensing, not passive collision' },
+      { label: 'Ecotone', text: 'Mutual awareness at the boundary as the richest form of information' }
+    ]
+  }
+};
+
+// ====== TERM MODAL LOGIC ======
+const overlay = document.getElementById('termOverlay');
+const modal = document.getElementById('termModal');
+const termWord = document.getElementById('termWord');
+const termPron = document.getElementById('termPron');
+const termDef = document.getElementById('termDef');
+const termConnectionsList = document.getElementById('termConnectionsList');
+const termConnections = document.getElementById('termConnections');
+
+function openTerm(key) {
+  const t = terms[key];
+  if (!t) return;
+  termWord.textContent = t.word;
+  termPron.textContent = t.pron;
+  termPron.style.display = t.pron ? 'block' : 'none';
+  termDef.textContent = t.def;
+  termConnectionsList.innerHTML = '';
+  if (t.connections && t.connections.length) {
+    termConnections.style.display = 'block';
+    t.connections.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'term-modal-connection';
+      div.innerHTML = `<em>${c.label}</em> — ${c.text}`;
+      termConnectionsList.appendChild(div);
+    });
+  } else {
+    termConnections.style.display = 'none';
+  }
+  overlay.classList.add('active');
+  modal.classList.add('active');
+}
+
+function closeTerm() {
+  overlay.classList.remove('active');
+  modal.classList.remove('active');
+}
+
+overlay.addEventListener('click', closeTerm);
+document.getElementById('termClose').addEventListener('click', closeTerm);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTerm(); });
+
+document.querySelectorAll('.term-link').forEach(el => {
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    openTerm(el.dataset.term);
+  });
+});
+
+// ====== SCROLL PROGRESS ======
+const progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (scrollTop / docHeight * 100) + '%';
+});
+
+// ====== WORD NAV ======
+const wordNav = document.getElementById('wordNav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > window.innerHeight * 0.6) {
+    wordNav.classList.add('visible');
+  } else {
+    wordNav.classList.remove('visible');
+  }
+});
+
+// ====== SECTION REVEAL ======
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+document.querySelectorAll('.section-inner').forEach(el => revealObserver.observe(el));
+
+// ====== IMAGE REVEAL ======
+const imgObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.2 });
+
+document.querySelectorAll('.image-break img').forEach(el => imgObserver.observe(el));
+
+// ====== NAV DOTS ======
+const sections = document.querySelectorAll('.section');
+const dots = document.querySelectorAll('.nav-dot');
+
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const index = entry.target.dataset.index;
+      dots.forEach(d => d.classList.remove('active'));
+      dots[index]?.classList.add('active');
+    }
+  });
+}, { threshold: 0.4 });
+
+sections.forEach(s => sectionObserver.observe(s));
+
+dots.forEach(dot => {
+  dot.addEventListener('click', () => {
+    const idx = dot.dataset.section;
+    sections[idx]?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// ====== HERO PARTICLES ======
+const particleContainer = document.getElementById('heroParticles');
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = 3 + Math.random() * 8;
+  p.style.width = size + 'px';
+  p.style.height = size + 'px';
+  p.style.left = (10 + Math.random() * 80) + '%';
+  p.style.top = (10 + Math.random() * 80) + '%';
+  p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dy', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dx2', (Math.random() * 120 - 60) + 'px');
+  p.style.setProperty('--dy2', (Math.random() * 120 - 60) + 'px');
+  p.style.animationDelay = (Math.random() * 10) + 's';
+  p.style.animationDuration = (8 + Math.random() * 8) + 's';
+  particleContainer.appendChild(p);
+}
+
+// ====== AMBIENT CANVAS ======
+const canvas = document.getElementById('scent-canvas');
+const ctx = canvas.getContext('2d');
+let w, h;
+let trails = [];
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Trail {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * w;
+    this.y = Math.random() * h;
+    this.vx = (Math.random() - 0.5) * 0.25;
+    this.vy = (Math.random() - 0.5) * 0.25;
+    this.life = 0;
+    this.maxLife = 400 + Math.random() * 400;
+    this.radius = 80 + Math.random() * 120;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life++;
+    if (this.life > this.maxLife) this.reset();
+  }
+  draw() {
+    const progress = this.life / this.maxLife;
+    const alpha = Math.sin(progress * Math.PI) * 0.02;
+    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+    gradient.addColorStop(0, `rgba(74, 107, 90, ${alpha})`);
+    gradient.addColorStop(1, 'rgba(74, 107, 90, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+  }
+}
+
+for (let i = 0; i < 5; i++) {
+  const t = new Trail();
+  t.life = Math.random() * t.maxLife;
+  trails.push(t);
+}
+
+function animate() {
+  ctx.clearRect(0, 0, w, h);
+  trails.forEach(t => { t.update(); t.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+
+</body>
+</html>

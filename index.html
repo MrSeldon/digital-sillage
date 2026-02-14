@@ -48,7 +48,6 @@
     z-index: 200;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 2.5rem;
     padding: 1.2rem 2rem;
     background: rgba(253, 251, 247, 0.92);
@@ -57,11 +56,17 @@
     border-bottom: 1px solid rgba(196, 149, 106, 0.08);
     transform: translateY(-100%);
     transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   .word-nav.visible {
     transform: translateY(0);
   }
+
+  .word-nav::-webkit-scrollbar { display: none; }
+  .word-nav-item, .word-nav-dot { flex-shrink: 0; }
 
   .word-nav-item {
     font-family: 'Cormorant Garamond', serif;
@@ -258,6 +263,42 @@
     margin-bottom: 2.5rem;
     opacity: 0;
     animation: fadeUp 2s 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+
+  .speak-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: 50%;
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .speak-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--mist);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.4s ease;
+  }
+
+  .speak-btn:hover svg {
+    stroke: var(--amber);
+  }
+
+  .speak-btn.playing svg {
+    stroke: var(--amber);
   }
 
   .hero-line {
@@ -725,7 +766,7 @@
     .nav-dots { right: 1rem; gap: 1rem; }
     .nav-dot::after { display: none; }
     .hero-word { letter-spacing: 0.08em; }
-    .word-nav { gap: 1.2rem; padding: 1rem 1rem; }
+    .word-nav { gap: 1.2rem; padding: 1rem 1.5rem; }
     .word-nav-item { font-size: 0.82rem; letter-spacing: 0.06em; }
   }
 
@@ -746,11 +787,25 @@
 <nav class="word-nav" id="wordNav">
   <a class="word-nav-item active" data-word="sillage">sillage</a>
   <div class="word-nav-dot"></div>
-  <a class="word-nav-item upcoming" data-word="apapachar">apapachar</a>
+  <a class="word-nav-item" data-word="apapachar" href="apapachar.html">apapachar</a>
   <div class="word-nav-dot"></div>
-  <a class="word-nav-item upcoming" data-word="ecotone">ecotone</a>
+  <a class="word-nav-item" data-word="ecotone" href="ecotone.html">ecotone</a>
   <div class="word-nav-dot"></div>
-  <a class="word-nav-item upcoming" data-word="crown-shyness">crown shyness</a>
+  <a class="word-nav-item" data-word="crown-shyness" href="crown-shyness.html">crown shyness</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="lacuna" href="lacuna.html">lacuna</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="centripetal" href="centripetal.html">centripetal</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="limning" href="limning.html">limning</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="nepantla" href="nepantla.html">nepantla</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ollin" href="ollin.html">ollin</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="resonance" href="resonance.html">resonance</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="igitwenge" href="igitwenge.html">igitwenge</a>
 </nav>
 
 <!-- ====== VERTICAL NAV DOTS ====== -->
@@ -785,12 +840,19 @@
   <div class="hero-particles" id="heroParticles"></div>
   <div class="hero-content">
     <div class="hero-word">sillage</div>
-    <div class="hero-pronunciation">/siːˈjɑːʒ/ — French, noun</div>
+    <div class="hero-pronunciation">
+      /siːˈjɑːʒ/ — French, noun
+      <button class="speak-btn" id="speakBtn" aria-label="Hear pronunciation">
+        <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </button>
+    </div>
     <div class="hero-line"></div>
     <div class="hero-subtitle">
-      The wafting trail that lingers as you pass through.<br>
-      The wake of a vessel — its resonance emanating outward,<br>
-      waves reaching the shore long after it has gone.
+      The wafting scent trail that lingers as one passes through.<br>
+      The wake of a boat — its resonance emanating outward,<br>
+      waves reaching the shore long after it has gone.<br>
+      Footsteps in the sand, a physical shadow <br>
+      persisting beyond presence.
     </div>
   </div>
   <div class="scroll-cue"><span></span></div>
@@ -815,7 +877,7 @@
       </div>
       <div class="etymology-card" data-delay="400">
         <h3>The act of carving</h3>
-        <p>At Chamonix, sillage is the carved line through powder — not just what's left behind, but the act of carving itself. Choosing your line, committing to each turn.</p>
+        <p>At Chamonix, sillage is the carved line through powder — not just what's left behind, but the act of carving itself. A visual log of the paths chosen.</p>
       </div>
       <div class="etymology-card" data-delay="600">
         <h3>The impression</h3>
@@ -823,7 +885,7 @@
       </div>
     </div>
 
-    <p>Each root of the word arrives at the same truth: we leave traces of ourselves everywhere we go, and those traces carry a <span class="term-link" data-term="resonance">resonance</span> that persists beyond the act of presence.</p>
+    <p>Each root of the word stems from the same base concept: we leave traces of ourselves everywhere we go, and those traces carry a <span class="term-link" data-term="resonance">resonance</span> that persists beyond the act of presence.</p>
   </div>
 </section>
 
@@ -833,12 +895,12 @@
   <div class="section-inner">
     <div class="section-label">II</div>
     <h2>The trail you didn't know you were leaving</h2>
-    <p>There's a concept that lives in the negative space of sillage: <span class="term-link" data-term="lacuna">lacuna</span> — the gap, the absence, the thing that's missing. Conspicuously obvious in its absence, like a missing page in a book where the context makes it impossible to ignore. Where lacuna describes what isn't there, sillage is something closer — the presence we can still sense in spite of its absence.</p>
+    <p>There's a concept that lives in the negative space of sillage: <span class="term-link" data-term="lacuna">lacuna</span> — the gap, the absence, the thing that's missing. Conspicuously obvious in its absence, like a missing page in a book whose absence is revealed in the broken continuity. <br> Where lacuna describes what isn't there, sillage is something closer — the presence we can still sense in spite of its absence.</p>
 
     <div class="pullquote">
       An empty room with a hint that someone was there.<br>
       Sillage is the intersection between our sphere of awareness<br>
-      and presence receding in time. The temporal shadow.
+      and the receding echo in time of having been presenct. The temporal shadow.
     </div>
 
     <p>You are always emanating. Every interaction, every click, every moment of attention — every footstep in the sand — is a trace you leave, digital and physical alike. You're leaving a trail whether you're aware of it or not. The emanation is happening regardless.</p>
@@ -1276,7 +1338,189 @@ function animate() {
   requestAnimationFrame(animate);
 }
 animate();
+
+// ====== PRONUNCIATION BUTTON ======
+document.getElementById('speakBtn').addEventListener('click', function() {
+  const btn = this;
+  btn.classList.add('playing');
+  var audio = new Audio('audio/sillage.mp3');
+  audio.addEventListener('canplaythrough', function() { audio.play(); });
+  audio.addEventListener('ended', function() { btn.classList.remove('playing'); });
+  audio.addEventListener('error', function() {
+    const utterance = new SpeechSynthesisUtterance('sillage');
+    utterance.lang = 'fr-FR';
+    utterance.rate = 0.8;
+    utterance.pitch = 1;
+    const voices = speechSynthesis.getVoices();
+    const french = voices.find(v => v.lang.startsWith('fr'));
+    if (french) utterance.voice = french;
+    utterance.onend = () => btn.classList.remove('playing');
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  });
+});
+
+// Auto-scroll active word into view in nav
+var _navRef = document.getElementById('wordNav');
+var activeWord = _navRef && _navRef.querySelector('.word-nav-item.active');
+if (activeWord) {
+  setTimeout(function() {
+    activeWord.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, 100);
+}
 </script>
+
+<script>
+window.pageTranslations = {
+  es: {
+    heroSubtitle: 'La estela aromática que perdura cuando alguien pasa.<br>La estela de un barco — su resonancia expandiéndose hacia afuera,<br>olas alcanzando la orilla mucho después de que se ha ido.<br>Huellas en la arena, una sombra física<br>que persiste más allá de la presencia.',
+    sections: {
+      '1': {
+        h: 'Una palabra con muchos cuerpos',
+        p: [
+          'Algunas palabras son portales. <em>Sillage</em> es una de ellas — una palabra que lleva dentro toda una filosofía de la presencia. No la presencia ruidosa. Esa que se reconoce después, en el espacio donde alguien solía estar. El aroma que insinúa la presencia de alguien que ya no está.',
+          null,
+          'Cada raíz de la palabra proviene del mismo concepto base: dejamos rastros de nosotros mismos por donde vamos, y esos rastros llevan una <span class="term-link" data-term="resonance">resonancia</span> que persiste más allá del acto de estar presentes.'
+        ],
+        q: null
+      },
+      '2': {
+        h: 'La estela que no sabías que dejabas',
+        p: [
+          'Hay un concepto que habita en el espacio negativo del sillage: <span class="term-link" data-term="lacuna">lacuna</span> — la brecha, la ausencia, lo que falta. Conspicuamente obvia en su ausencia, como una página perdida en un libro cuya falta se revela en la continuidad rota. <br> Donde la lacuna describe lo que no está, el sillage es algo más cercano — la presencia que aún percibimos a pesar de su ausencia.',
+          'Siempre estás emanando. Cada interacción, cada clic, cada momento de atención — cada huella en la arena — es un rastro que dejas, digital y físico por igual. Dejas una estela seas consciente de ello o no. La emanación ocurre de todos modos.',
+          'En el ámbito digital, esta estela es vasta y continua. Las cosas en las que te detienes, la forma en que escribes una búsqueda, las decisiones que tomas y las que no — todo ello forma una especie de firma olfativa, más íntima que cualquier biografía que compondrías voluntariamente. Y la mayor parte del tiempo, no tienes idea de que está ahí. Como un aroma en tu propia casa al que te has acostumbrado tanto que ya no lo percibes. Un embotamiento por repetición. Una normalización.'
+        ],
+        q: 'Una habitación vacía con el indicio de que alguien estuvo ahí.<br>El sillage es la intersección entre nuestra esfera de percepción<br>y el eco menguante en el tiempo de haber estado presente. La sombra temporal.'
+      },
+      '3': {
+        h: 'Tres despertares',
+        p: [
+          'Una invitación a percibir:',
+          null,
+          'El sillage es emanación <em>más</em> artefactos — las cosas que creas, el trabajo que dejas, las semillas que plantas. La creación sin intención es casi un encubrimiento — sintético, pretendiendo ser algo que no es. El corazón de todo esto es vivir aquello que realmente eres. Ser más tú, de manera intencional.'
+        ],
+        q: null
+      },
+      '4': {
+        h: 'La catástrofe silenciosa',
+        p: [
+          'Esto es lo que le ocurre a un sillage desatendido — uno que no es cuidado, que no se ofrece al mundo con esmero. Es capturado, mercantilizado y comprimido en <span class="term-link term-link-hidden" data-term="purchase-intent">intención de compra</span>.',
+          'La estela de todos los lugares donde has estado, de todo lo que has mirado — todo cosechado por sistemas propietarios que lo aplanan en una sola dimensión: qué podemos venderte ahora. Tus patrones de curiosidad, tus momentos de asombro, movilizados hacia un consumo más eficiente.',
+          'La fuerza en acción es <span class="term-link" data-term="centripetal">centrípeta</span> — tirando hacia adentro, creando pozos gravitacionales de atención. No se trata de expandir, explorar, <span class="term-link" data-term="apapachar">abrazar</span>, o crecer. Se trata de retenerte. Estas plataformas alimentadas por la atención no quieren que vayas y crees algo hermoso por tu cuenta. Quieren que te quedes, que sigas desplazándote, que consumas. Atrapado en el <span class="term-link" data-term="gratification-loop">ciclo de gratificación</span>, cosechando consecuencias externalizadas. El tiempo se disuelve y has vivido innumerables sueños sin tocar la realidad. Revisas veinte recetas y sigues con hambre. El significante, más valioso que el significado.',
+          'El salón — donde las ideas colisionaban, donde los desconocidos se convertían en colaboradores, donde la conversación inesperada cambiaba la trayectoria de una vida — reemplazado por un feed infinito optimizado para el tiempo en plataforma. El sillage de toda una cultura, cosechado. No hacemos pausa. No nos detenemos a reflexionar. <em>¿Realmente me gusta esto? — ¿Dónde estoy? (reorientar) — ¿Por qué voy en esta dirección? (reevaluar)</em>'
+        ],
+        q: 'Esto no es solo un problema de privacidad.<br>Es una pérdida cultural.'
+      },
+      '5': {
+        h: 'Una invitación a participar y dirigir',
+        p: [
+          'Lo opuesto a un ciclo de retención es una invitación a participar — no una notificación, no un empujón, no un patrón oscuro, sino velocidad de escape. Una plataforma de lanzamiento. Un estímulo no solo para conectar y crear, sino para ir — explorar, descubrir nueva belleza en el mundo, verter más amor y alegría en él. Crecer y cultivar cosas hermosas. Tanto de todo lo demás se trata de pequeños golpes de dopamina diseñados para mantenerte desplazándote. Lo opuesto es este aliento para realmente <em>hacer</em> algo.',
+          'Hay una distinción aquí que importa: el consumo continuo te mantiene dentro del <span class="term-link" data-term="gratification-loop">ciclo de gratificación</span> — no intencional, sin un horizonte temporal lo suficientemente largo como para llevar gravedad direccional. Mientras que la creación es por definición intencional. Y a través de ese proceso de crear, algo empieza a suceder — hace emerger a los miembros de tu tribu. Conexiones que no sabías que existían. Personas que no sabías que estabas buscando.',
+          'Imagina un sistema que es <span class="term-link" data-term="centrifugal">centrífugo</span> en lugar de centrípeto — uno que se mueve hacia afuera, descentralizado, en vez de atraer todo hacia un pozo gravitacional. Donde la estela que dejas es legible, y tuya. La diferencia entre vigilancia y legibilidad es direccional: una extrae valor de ti, la otra te revela valor a ti.'
+        ],
+        q: 'Hay resonancias allá afuera — comunidades<br>que aún no han emergido. A través de la creación,<br>a través de la resonancia, se encuentran.'
+      },
+      '6': {
+        h: 'Lo que crece, y lo que muere',
+        p: [
+          'Cuando pasas sin cuidado, la entropía gana. Las cosas simplemente colapsan. La resonancia se aplana, se extingue. Pero si estás plantando semillas intencionalmente — si te mueves por el espacio con cuidado — ese cuidado resuena. Permanece. Como una chispa que crece hasta ser brasa y luego fuego. Se queda.',
+          'Piensa en un <span class="term-link" data-term="resonating-body">cuerpo resonante</span> — el cuerpo de una guitarra, un violonchelo. Solo cuando pulsas las cuerdas, cuando añades esa presencia intencional, la nota emerge, llena y resuena. Sin esa intención — esa acción — es silencio.',
+          'Es un argumento para caminar por el mundo plantando flores en todas partes. Ese es el sillage supremo — estás plantando cosas que crecerán. Semillas que quizá nunca veas brotar. Pero están ahí. Plantas posibilidades con la esperanza de que una resonancia prenda — que algo arraigue, que alguien lo cuide. Y el cuidar es su propia práctica: no algo que sucede porque plantaste, sino algo que eliges iterativamente de nuevo. Revisar, evaluar el estado, ajustar, tomar una nueva decisión. Cuando ves un jardín que necesita cuidado, lo cultivas. Eso nos incumbe a todos — un mundo de abundancia donde todos cuidamos los jardines de los demás. Ese cuidado opera a través de todas las escalas de tiempo — no los ciclos frenéticos y breves del ciclo de gratificación, sino longitudes de onda más largas. Resonancia más profunda. Del tipo que lleva gravedad direccional, con una pureza que las breves distracciones zumbantes nunca pueden portar.',
+          'El poder reside en la resolución más fina —<br>en el borde mismo donde la entidad se encuentra con el mundo.'
+        ],
+        q: 'El poder reside en la resolución más fina —<br>en el borde mismo donde la entidad se encuentra con el mundo.'
+      },
+      '7': {
+        h: 'Reclama la estela',
+        p: [
+          'Siempre estás dejando sillage. La pregunta es si se disipa en sistemas que lo aplanan — mercantilizado, extraído, convertido en arma para el consumo — o si se convierte en algo legible, algo hermoso, algo vivo, algo que te conecta con personas que no sabías que estabas buscando.',
+          'Toma consciencia de la estela que dejas. Asume la agencia que esa consciencia abre — innumerables opciones, la revelación de que podrías moverte hacia cualquier cosa. Luego sé intencional con la dirección que elijas. Canaliza amor, reverencia y gratitud en lo que creas. Crea cosas que perduren. Deja artefactos que lleven resonancia. Cuida los jardines cada vez que los encuentres.',
+          null,
+          'Sé intencional con los rastros que dejas.<br>Vierte amor en el mundo libremente, de una manera que otros puedan sentir.',
+          'No porque alguien esté mirando.<br>No porque vaya a ser medido.<br>Sino porque la estela es tuya,<br>y vale la pena hacerla hermosa.',
+          'Percibe. Mira a tu alrededor. <span class="term-link" data-term="limning">Delinea</span> tus propios bordes.<br>¿Qué ves ahí, en los límites?<br>Ahí es donde está la riqueza.'
+        ],
+        q: null
+      }
+    }
+  },
+  rw: {
+    heroSubtitle: 'Impumuro nyamukiza isigara igihe umuntu anyuze.<br>Umuyaga w\'ubwato — amarangamutima yacyo akwira hose,<br>imivumba igera ku nkombe nyuma yuko bwamaze kugenda.<br>Ibirenge mu musenyi, igicucu cy\'umubiri<br>gikomeza kubaho nyuma y\'ubwitange.',
+    sections: {
+      '1': {
+        h: 'Ijambo rifite imibiri myinshi',
+        p: [
+          'Hari amagambo ari amarembo. <em>Sillage</em> ni rimwe muri yo — ijambo ritwaye muri ryo imyumvire yose y\'ukuba uhari. Si ukuba uhari gutaramuka. Ni ukuba uhari kuzwi nyuma y\'igihe, mu mwanya umuntu yamaze gutura. Impumuro itwereka ko hari umuntu utakiriho.',
+          null,
+          'Buri muzi w\'iri jambo uturuka ku gitekerezo kimwe cy\'ibanze: dusiga ibimenyetso byacu ahantu hose tunyura, kandi ibyo bimenyetso bitwara <span class="term-link" data-term="resonance">amarangamutima</span> akomeza kubaho nyuma y\'ukuba twahari.'
+        ],
+        q: null
+      },
+      '2': {
+        h: 'Umuyoboro utari uzi ko usiga',
+        p: [
+          'Hari igitekerezo kiba mu mwanya w\'ubusa wa sillage: <span class="term-link" data-term="lacuna">lacuna</span> — icyuho, ubusa, ikintu kitahari. Kigaragara cyane mu kubura kwacyo, nk\'urupapuro rutahari mu gitabo rubura rugaragazwa n\'ubukomere bw\'umurongo uvunitse. <br> Aho lacuna isobanura ibitahari, sillage ni ikintu gisumba — ni ukuba uhari dushobora gukomeza kumva nubwo kitakiriho.',
+          'Buri gihe uba urasohora. Buri gukorana, buri gukanda, buri mwanya w\'umwitwarero — buri kirenge mu musenyi — ni ikimenyetso usiga, mu bya digitale no mu mubiri. Usiga umuyoboro uba ubizi cyangwa utabizi. Isohoka riba aho buri gihe.',
+          'Mu isi ya digitale, uyu muyoboro ni munini kandi uhoraho. Ibintu umara umwanya ureba, uburyo wandika ubushakashatsi, amahitamo ufata n\'ayo utafata — byose bigira imiterere y\'ikimenyetso cy\'impumuro, cyihariye kuruta inyandiko iyo ari yo yose wandika ubushake. Kandi akenshi, nta cyo ubizi ko kihari. Nk\'impumuro mu nzu yawe wamenyereye cyane ku buryo utakiyumva. Kubura kumva kubera gusubiramo. Kumenyera.',
+        ],
+        q: 'Icyumba cy\'ubusa gifite ikimenyetso ko hari umuntu wahari.<br>Sillage ni aho urugero rw\'ubumenyi bwacu ruhura<br>n\'ijwi ry\'ibihe rikamanguka ry\'ukuba wahari. Igicucu cy\'igihe.'
+      },
+      '3': {
+        h: 'Kumenyekana gatatu',
+        p: [
+          'Ubutumire bwo kumenya:',
+          null,
+          'Sillage ni isohoka <em>hamwe n\'</em>ibikorwa — ibintu ukora, umurimo usiga, imbuto utera. Kurema utabigambiriye ni nko gupfuka — ikintu cy\'ubukorano, gisa n\'ikintu kitari cyo. Umutima w\'ibi byose ni kubaho ibintu uri. Kuba wowe kurushaho, mu buryo ubigambiriye.'
+        ],
+        q: null
+      },
+      '4': {
+        h: 'Igihombo cy\'ubucece',
+        p: [
+          'Ibi ni byo bibera sillage ititaweho — itakundwa, itashyizwe mu isi neza. Ifatwa, igurishwa, kandi ikoreshwa mu <span class="term-link term-link-hidden" data-term="purchase-intent">umugambi wo kugura</span>.',
+          'Umuyoboro w\'ahantu hose wagiyeho, ibintu byose wareze — byose bisarurwa na sisitemu zihariye zibikuza mu rugero rumwe: ni iki dushobora kukugurisha ubu? Imiterere yawe yo gushishikarira, ibihe byawe byo gutangazwa, bikoreshwa mu buryo bwo gutuma urisha kurushaho.',
+          'Ingufu zikora ni <span class="term-link" data-term="centripetal">iz\'imbere</span> — zikurura imbere, zikora imyobo y\'umuzenguruko w\'umwitwarero. Ntabwo ari ukwaguka, gushakisha, <span class="term-link" data-term="apapachar">kwakirana</span>, cyangwa gukura. Ni ukugusigaza. Izi mbuga z\'umwitwarero ntizishaka ko ujya gukora ikintu cyiza wenyine. Zishaka ko uguma, ukomeza kwimura, ukarisha. Ufashwe mu <span class="term-link" data-term="gratification-loop">umuzenguruko w\'ibyishimo by\'agateganyo</span>, usarura ingaruka z\'inyuma. Igihe kirayoyoka, kandi wabayeho mu nzozi zitabarika utakoze ku by\'ukuri. Ureba amafunguro makuru kandi uracyasonza. Ikimenyetso, gifite agaciro kuruta igisobanuro.',
+          'Isaranganya — aho ibitekerezo byahuriraga, aho abantu batamenyaga bahindukaga abafatanyabikorwa, aho ikiganiro kitateganijwe cyahinduraga inzira y\'ubuzima — byasimbuwe n\'urutonde rudashira rushyizweho kugira ngo umwanya uri kuri porogaramu ube munini. Sillage y\'umuco wose, isarurwa. Ntidufata umwanya. Ntiduhaguruka tukibaza. <em>Nibyo nyine nkunda ibi? — Ndi he? (gusubiramo aho ndi) — Kuki ngiye muri iyi nzira? (gusubiramo ibitekerezo)</em>'
+        ],
+        q: 'Ibi si ikibazo cy\'ibanga gusa.<br>Ni igihombo cy\'umuco.'
+      },
+      '5': {
+        h: 'Ubutumire bwo kugira uruhare no kuyobora',
+        p: [
+          'Ibinyuranye n\'umuzenguruko wo gukomeza ni ubutumire bwo kugira uruhare — si kumenyesha, si gusunika, si uburyo bubi, ahubwo ni umuvuduko wo gusohoka. Ikibanza cyo gusimbuka. Inkunga si gusa yo guhuza no gukora, ahubwo ni ukugenda — gushakisha, gukura ubwiza bushya mu isi, gushyira urukundo n\'ibyishimo byinshi muri yo. Gukura no gutera ibintu byiza. Byinshi mu bindi byose bijyanye n\'utugegene duto twa dopamine twashyizweho kugira ngo ukomeze kwimura. Ibinyuranye ni uku gutera inkunga yo koko <em>gukora</em> ikintu.',
+          'Hari itandukaniro hano rifite akamaro: kurya guhoraho kukugerera mu <span class="term-link" data-term="gratification-loop">muzenguruko w\'ibyishimo by\'agateganyo</span> — utabigambiriye, udafite igihe kirekire gihagije cyo gutwara ingufu z\'icyerekezo. Mu gihe gukora kubwabyo ni ibigambiriye. Kandi binyuze muri uwo murongo wo gukora, ikintu gitangira kubaho — gituma abantu b\'umuryango wawe bagaragara. Isano utari uzi ko iriho. Abantu utari uzi ko ushaka.',
+          'Tekereza sisitemu ari <span class="term-link" data-term="centrifugal">iy\'inyuma</span> aho kuba iy\'imbere — igenda inyuma, ikwirakwizwa, aho gukurura byose mu mwobo w\'umuzenguruko. Aho umuyoboro usiga usomeka, kandi ari uwawe. Itandukaniro hagati y\'ubutegetsi bwo kureba n\'ubusomeki ni icy\'icyerekezo: kimwe gikura agaciro muri wowe, ikindi kikwereka agaciro.'
+        ],
+        q: 'Hari amarangamutima hanze — amatsinda<br>atarameze ngo agaragare. Binyuze mu gukora,<br>binyuze mu marangamutima, arasangwa.'
+      },
+      '6': {
+        h: 'Igikura, n\'igipfa',
+        p: [
+          'Iyo unyuze utitaye, entropy itsinda. Ibintu bisenyuka gusa. Amarangamutima ararangira, akazima. Ariko niba utera imbuto ubigambiriye — niba unyura mu mwanya witaye — ubwo bwitwarero burangira. Busigara. Nk\'urumuri ruto rukura rukaba umuriro muto rukaba umuriro munini. Busigara.',
+          'Tekereza <span class="term-link" data-term="resonating-body">umubiri urangira</span> — umubiri w\'inanga, w\'icyembe. Ni gusa iyo ukubise imirya, iyo wongereyeho ubwo bwitange bubigambiriye, ko ijwi rivuka rigasiba rigakomeza kurangira. Nta bwo bwigambiriye — nta gikorwa — ni ubucece.',
+          'Ni impamvu yo kugenda utera indabo ahantu hose. Iyo ni yo sillage ikomeye cyane — utera ibintu bizakura. Imbuto ushobora kutazigera ubona zitera. Ariko ziri aho. Utera amahirwe mu kwizera ko amarangamutima azafata — ko ikintu gikura, ko umuntu agitaho. Kandi kwitaho ni imyitozo yayo ubwayo: si ikintu kibera kubera ko wateresheje, ahubwo ni ikintu uhitamo buri gihe. Kugenzura, kureba imimerere, guhindura, gufata icyemezo gishya. Iyo ubonye ubusitani bukeneye kwitabwaho, urawutera. Ibyo bidusaba twese — isi y\'ubukungu aho twese twita ku busitani bw\'abandi. Ubwo bwitwarero bukora mu ngero zose z\'igihe — si imizenguruko y\'igihe gito y\'umuzenguruko w\'ibyishimo, ahubwo ni uburebure bw\'umurongo burebure. Amarangamutima y\'imbere. Ayo afite ingufu z\'icyerekezo, afite ubudahangarwa ibitera guhungabanya by\'igihe gito ntibishobora kugira.',
+          'Ingufu ziba mu kumenya neza cyane —<br>ku ruhande nyarwo aho ikintu gihura n\'isi.'
+        ],
+        q: 'Ingufu ziba mu kumenya neza cyane —<br>ku ruhande nyarwo aho ikintu gihura n\'isi.'
+      },
+      '7': {
+        h: 'Subira witorere umuyoboro',
+        p: [
+          'Buri gihe uba usiga sillage. Ikibazo ni niba yitandukanya mu sisitemu ziyikuza — igurishwa, igasohorwa, igahindukirizwa mu kurisha — cyangwa niba ihinduka ikintu gisomeka, ikintu cyiza, ikintu kizima, ikintu kiguhuza n\'abantu utari uzi ko ushaka.',
+          'Menya umuyoboro usiga. Injira mu bubasha ubwo bumenyi bukugurira — amahitamo menshi, kumva ko ushobora kugenda iyo ari yo yose. Hanyuma ubigambiriye n\'icyerekezo uhitamo. Shyira urukundo n\'icyubahiro n\'ishimwe mu byo ukora. Kora ibintu bisigara. Siga ibikorwa bitwara amarangamutima. Ita ku busitani buri gihe ubusanze.',
+          null,
+          'Bigambiriye n\'ibimenyetso usiga.<br>Shyira urukundo mu isi nta kwifuza, mu buryo abantu bashobora kubumva.',
+          'Si kubera hari umuntu ureba.<br>Si kubera bizapimwa.<br>Ahubwo kubera umuyoboro ni uwawe,<br>kandi ukwiriye kuwukora neza.',
+          'Menya. Reba impande zose. <span class="term-link" data-term="limning">Shushanya</span> imbibi zawe.<br>Ni iki ubona aho, ku mbibi?<br>Ni ho ubukungu buri.'
+        ],
+        q: null
+      }
+    }
+  }
+};
+</script>
+<script src="i18n.js"></script>
 
 </body>
 </html>

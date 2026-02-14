@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ecotone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFBF7;
+    --amber: #C4956A;
+    --deep-amber: #A67744;
+    --umber: #3D2B1F;
+    --deep-umber: #2A1D14;
+    --smoke: #8B7D6B;
+    --mist: #D4C9B8;
+    --blush: #E8D5C4;
+    --ink: #1A1210;
+    --faint: rgba(164, 119, 68, 0.08);
+    /* ecotone-specific — tidal greens */
+    --tidal: #5A7A6B;
+    --deep-tidal: #3D5C4E;
+    --shore: #8BA99A;
+    --salt: rgba(90, 122, 107, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--mist) transparent;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm-white);
+    color: var(--umber);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ====== WORD NAV ====== */
+  .word-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    padding: 1.2rem 2rem;
+    background: rgba(253, 251, 247, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(90, 122, 107, 0.08);
+    transform: translateY(-100%);
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .word-nav.visible { transform: translateY(0); }
+
+  .word-nav::-webkit-scrollbar { display: none; }
+  .word-nav-item, .word-nav-dot { flex-shrink: 0; }
+
+  .word-nav-item {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+    color: var(--mist);
+    cursor: pointer;
+    transition: all 0.4s ease;
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 2px;
+  }
+
+  .word-nav-item:hover { color: var(--tidal); }
+
+  .word-nav-item.active { color: var(--deep-umber); }
+
+  .word-nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--tidal);
+  }
+
+  .word-nav-item.upcoming {
+    opacity: 0.35;
+    cursor: default;
+    font-style: italic;
+  }
+
+  .word-nav-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--mist);
+    flex-shrink: 0;
+  }
+
+  /* ====== SCROLL PROGRESS ====== */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--tidal), var(--deep-tidal));
+    z-index: 1000;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* ====== NAV DOTS ====== */
+  .nav-dots {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .nav-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mist);
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+  }
+
+  .nav-dot.active {
+    background: var(--tidal);
+    transform: scale(1.6);
+  }
+
+  .nav-dot::after {
+    content: attr(data-label);
+    position: absolute;
+    right: 1.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .nav-dot:hover::after { opacity: 1; }
+
+  /* ====== SECTIONS ====== */
+  .section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem;
+    position: relative;
+  }
+
+  .section-inner {
+    max-width: 680px;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1),
+                transform 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .section-inner.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ====== HERO ====== */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 30%, #d4e6dc 0%, var(--warm-white) 60%);
+    z-index: 0;
+  }
+
+  .hero-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--tidal);
+    opacity: 0;
+    animation: drift 12s infinite ease-in-out;
+  }
+
+  @keyframes drift {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    20% { opacity: 0.12; }
+    50% { opacity: 0.06; transform: translate(var(--dx), var(--dy)) scale(1); }
+    80% { opacity: 0.1; }
+    100% { opacity: 0; transform: translate(var(--dx2), var(--dy2)) scale(0.3); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-word {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    color: var(--umber);
+    letter-spacing: 0.15em;
+    margin-bottom: 0.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .hero-pronunciation {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 1.1rem;
+    color: var(--smoke);
+    letter-spacing: 0.08em;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+
+  .speak-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: 50%;
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .speak-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--mist);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.4s ease;
+  }
+
+  .speak-btn:hover svg {
+    stroke: var(--tidal);
+  }
+
+  .speak-btn.playing svg {
+    stroke: var(--tidal);
+  }
+
+  .hero-line {
+    width: 40px;
+    height: 1px;
+    background: var(--tidal);
+    margin: 0 auto 2.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .hero-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    color: var(--smoke);
+    line-height: 1.9;
+    max-width: 520px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeUp 2s 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    animation: fadeUp 2s 2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    z-index: 2;
+  }
+
+  .scroll-cue span {
+    display: block;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--tidal), transparent);
+    margin: 0 auto;
+    animation: pulse-line 2.5s infinite ease-in-out;
+  }
+
+  @keyframes pulse-line {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+    50% { opacity: 0.8; transform: scaleY(1); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(25px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ====== TYPOGRAPHY ====== */
+  h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    color: var(--deep-umber);
+    margin-bottom: 2rem;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+  }
+
+  .section-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--tidal);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  p {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 1.02rem;
+    line-height: 1.85;
+    color: var(--umber);
+    margin-bottom: 1.4rem;
+  }
+
+  p:last-child { margin-bottom: 0; }
+
+  .pullquote {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.3rem, 3vw, 1.7rem);
+    line-height: 1.6;
+    color: var(--deep-tidal);
+    padding: 2rem 0;
+    border-top: 1px solid var(--salt);
+    border-bottom: 1px solid var(--salt);
+    margin: 2.5rem 0;
+    text-align: center;
+  }
+
+  /* ====== ETYMOLOGY CARDS ====== */
+  .etymology-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin: 2.5rem 0;
+  }
+
+  .etymology-card {
+    padding: 1.8rem;
+    border-radius: 2px;
+    background: var(--salt);
+    border-left: 2px solid var(--tidal);
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .etymology-card.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .etymology-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 1.15rem;
+    color: var(--deep-tidal);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.03em;
+  }
+
+  .etymology-card p {
+    font-size: 0.92rem;
+    margin-bottom: 0;
+    color: var(--smoke);
+  }
+
+  /* ====== DARK SECTION ====== */
+  .section-dark {
+    background: var(--deep-umber);
+    color: var(--cream);
+  }
+
+  .section-dark h2 { color: var(--blush); }
+  .section-dark p { color: var(--mist); }
+  .section-dark .section-label { color: var(--shore); }
+  .section-dark .pullquote {
+    color: var(--shore);
+    border-color: rgba(90, 122, 107, 0.15);
+  }
+  .section-dark .term-link {
+    color: inherit;
+    border-bottom-color: rgba(90, 122, 107, 0.15);
+  }
+  .section-dark .term-link:hover {
+    color: var(--shore);
+    border-bottom-color: rgba(90, 122, 107, 0.4);
+  }
+
+  /* ====== WARM SECTION ====== */
+  .section-warm {
+    background: var(--cream);
+  }
+
+  /* ====== TIDAL SECTION ====== */
+  .section-tidal {
+    background: #2C3E35;
+    color: #d4e6dc;
+  }
+
+  .section-tidal h2 { color: #d4e6dc; }
+  .section-tidal p { color: #a8c4b5; }
+  .section-tidal .section-label { color: var(--shore); }
+  .section-tidal .pullquote {
+    color: var(--shore);
+    border-color: rgba(139, 169, 154, 0.15);
+  }
+
+  /* ====== TERM LINKS ====== */
+  .term-link {
+    color: inherit;
+    border-bottom: 1px solid rgba(90, 122, 107, 0.12);
+    cursor: pointer;
+    transition: border-color 0.4s ease, color 0.4s ease;
+    position: relative;
+    text-decoration: none;
+  }
+
+  .term-link:hover {
+    color: var(--deep-tidal);
+    border-bottom-color: rgba(90, 122, 107, 0.4);
+  }
+
+  /* ====== TERM MODAL ====== */
+  .term-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 18, 16, 0.4);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .term-modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .term-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    z-index: 501;
+    background: var(--warm-white);
+    border: 1px solid rgba(90, 122, 107, 0.15);
+    border-radius: 3px;
+    max-width: 480px;
+    width: calc(100% - 3rem);
+    padding: 2.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .term-modal.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .term-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--mist);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    line-height: 1;
+  }
+
+  .term-modal-close:hover { color: var(--umber); }
+
+  .term-modal-word {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 1.6rem;
+    color: var(--deep-umber);
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.05em;
+  }
+
+  .term-modal-pron {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--smoke);
+    margin-bottom: 1.2rem;
+  }
+
+  .term-modal-def {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: var(--umber);
+    margin-bottom: 1.2rem;
+  }
+
+  .term-modal-connections {
+    border-top: 1px solid var(--faint);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .term-modal-connections-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--tidal);
+    margin-bottom: 0.6rem;
+    font-weight: 500;
+  }
+
+  .term-modal-connection {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: var(--smoke);
+    line-height: 1.7;
+    padding-left: 0.8rem;
+    border-left: 1px solid var(--faint);
+    margin-bottom: 0.5rem;
+  }
+
+  .term-modal-connection em {
+    color: var(--deep-tidal);
+    font-style: normal;
+  }
+
+  /* ====== FINALE ====== */
+  .finale {
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 50% 70%, #d4e6dc 0%, var(--warm-white) 50%);
+  }
+
+  .finale h2 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    margin-bottom: 1.5rem;
+  }
+
+  .finale p {
+    max-width: 520px;
+    text-align: center;
+  }
+
+  .finale-line {
+    width: 60px;
+    height: 1px;
+    background: var(--tidal);
+    margin: 2.5rem auto;
+  }
+
+  .finale-small {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    margin-top: 3rem;
+  }
+
+  /* ====== COLOPHON ====== */
+  .colophon {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--warm-white);
+  }
+
+  .colophon p {
+    font-size: 0.75rem;
+    color: var(--mist);
+    letter-spacing: 0.05em;
+  }
+
+  .colophon a {
+    color: var(--tidal);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+
+  .colophon a:hover { border-bottom-color: var(--tidal); }
+
+  /* ====== CANVAS ====== */
+  #scent-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.35;
+  }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 768px) {
+    .section { padding: 4rem 1.5rem; }
+    .nav-dots { right: 1rem; gap: 1rem; }
+    .nav-dot::after { display: none; }
+    .hero-word { letter-spacing: 0.08em; }
+    .word-nav { gap: 1.2rem; padding: 1rem 1.5rem; }
+    .word-nav-item { font-size: 0.82rem; letter-spacing: 0.06em; }
+  }
+
+  @media (max-width: 480px) {
+    .section { padding: 3rem 1.2rem; }
+    .nav-dots { display: none; }
+    .word-nav { gap: 0.8rem; }
+    .word-nav-item { font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<canvas id="scent-canvas"></canvas>
+
+<!-- ====== WORD NAV ====== -->
+<nav class="word-nav" id="wordNav">
+  <a class="word-nav-item" data-word="sillage" href="/">sillage</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="apapachar" href="apapachar.html">apapachar</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item active" data-word="ecotone">ecotone</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="crown-shyness" href="crown-shyness.html">crown shyness</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="lacuna" href="lacuna.html">lacuna</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="centripetal" href="centripetal.html">centripetal</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="limning" href="limning.html">limning</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="nepantla" href="nepantla.html">nepantla</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ollin" href="ollin.html">ollin</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="resonance" href="resonance.html">resonance</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="igitwenge" href="igitwenge.html">igitwenge</a>
+</nav>
+
+<!-- ====== NAV DOTS ====== -->
+<nav class="nav-dots" id="navDots">
+  <div class="nav-dot active" data-section="0" data-label="Ecotone"></div>
+  <div class="nav-dot" data-section="1" data-label="The Word"></div>
+  <div class="nav-dot" data-section="2" data-label="The Dance"></div>
+  <div class="nav-dot" data-section="3" data-label="Crown Shyness"></div>
+  <div class="nav-dot" data-section="4" data-label="Limning"></div>
+  <div class="nav-dot" data-section="5" data-label="Resolution"></div>
+  <div class="nav-dot" data-section="6" data-label="The Edge"></div>
+</nav>
+
+<!-- ====== TERM MODAL ====== -->
+<div class="term-modal-overlay" id="termOverlay"></div>
+<div class="term-modal" id="termModal">
+  <button class="term-modal-close" id="termClose">&times;</button>
+  <div class="term-modal-word" id="termWord"></div>
+  <div class="term-modal-pron" id="termPron"></div>
+  <div class="term-modal-def" id="termDef"></div>
+  <div class="term-modal-connections" id="termConnections">
+    <div class="term-modal-connections-label">Resonances</div>
+    <div id="termConnectionsList"></div>
+  </div>
+</div>
+
+
+<!-- ======== HERO ======== -->
+<section class="hero section" data-index="0">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-content">
+    <div class="hero-word">ecotone</div>
+    <div class="hero-pronunciation">
+      /ˈiːkəˌtoʊn/ — from Greek oikos + tonos
+      <button class="speak-btn" id="speakBtn" aria-label="Hear pronunciation">
+        <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </button>
+    </div>
+    <div class="hero-line"></div>
+    <div class="hero-subtitle">
+      The tension between two homes.<br>
+      The transition zone where two worlds meet —<br>
+      not dead space, but where life is richest.
+    </div>
+  </div>
+  <div class="scroll-cue"><span></span></div>
+</section>
+
+
+<!-- ======== I. THE WORD ======== -->
+<section class="section" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">I</div>
+    <h2>The tension between two homes</h2>
+    <p>Greek <em>oikos</em> — home. Greek <em>tonos</em> — tension. The word literally means the tension between two homes. And that's exactly what it describes.</p>
+
+    <p>In ecology, an ecotone is the transition zone between two adjacent biomes. Not the deep ocean. Not the dry land. The place where the two meet. The tidal zone. The mangrove. The estuary. The salt marsh between ocean and land. The tree line between forest and alpine.</p>
+
+    <div class="pullquote">
+      These are the richest places of biodiversity on the planet.<br>
+      The resolution of life at its finest, expressed as diversity.
+    </div>
+
+    <p>It's not empty space. It's not a dead line on a map. It's where life is most dynamic. Most filled. Most diverse. Neither ocean nor land, but the richest habitat of all.</p>
+  </div>
+</section>
+
+
+<!-- ======== II. THE DANCE ======== -->
+<section class="section section-warm" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">II</div>
+    <h2>Two systems, one dance</h2>
+    <p>What creates that richness is a dance. Two systems — land and water, forest and meadow — pressing toward each other, receding, overlapping, defining each other's edges through a constant coming-to-know. Each encounter refines the boundary. Each tide reshapes the shore.</p>
+
+    <p>The ecotone is the living record of that dance. Two entities defining each other through the space between them.</p>
+
+    <div class="pullquote">
+      The goal isn't to eliminate the ecotone.<br>
+      It's to maximize its resolution.
+    </div>
+
+    <p>Think of it like calculus. Each system is a function approaching its limit. The edge scan increases the resolution of that boundary — slicing finer and finer until the exact domain of each is so precisely defined that there's no ambiguity about where one ends and the next begins. If you find overlap, that's signal: one has grown past its natural boundary. If you find a wide gap, that's signal too: both are underspecified, and something real is living in that unclaimed territory.</p>
+  </div>
+</section>
+
+
+<!-- ======== III. CROWN SHYNESS ======== -->
+<section class="section section-tidal" data-index="3">
+  <div class="section-inner">
+    <div class="section-label">III</div>
+    <h2>Crown shyness</h2>
+    <p>In a forest canopy, neighboring trees maintain a delicate gap between their crowns. Visible as channels of light overhead. Each canopy growing outward until it encounters the other, and then — pause. Attunement.</p>
+
+    <p>The gap isn't absence. It's not retreat. It's the finest expression of <span class="term-link" data-term="mutual-awareness">mutual awareness</span> between two living systems. Not an inert other, but another active being. A dance of getting to know, of feeling out the whole surface boundary.</p>
+
+    <div class="pullquote">
+      Crown shyness is the visible result of<br>
+      ecotonal equilibrium — two living systems<br>
+      that have each found their mutual limit.
+    </div>
+
+    <p>That gap in the canopy is itself an ecotone. The richest zone. And the act of growing outward until you encounter it — that has a name too.</p>
+  </div>
+</section>
+
+
+<!-- ======== IV. LIMNING ======== -->
+<section class="section" data-index="4">
+  <div class="section-inner">
+    <div class="section-label">IV</div>
+    <h2>Limning</h2>
+    <p>From Latin <em>luminare</em> — to illuminate. <span class="term-link" data-term="limning">Limning</span> means to trace the outline of something, to depict by drawing the edge. Reaching out to fill all the little pieces, to probe all the edges, to get the highest resolution at the boundary.</p>
+
+    <p>Not just between self and other, but between self and another active being. The dance of getting to know, of feeling out the whole surface boundary. As you get finer and finer in your resolution, the very nature of that specific, fine detail enriches the entire surface.</p>
+
+    <p>There's a verification in this. Both systems <span class="term-link" data-term="dual-origin">limning outward</span> from their respective interiors, arriving at matching boundaries. It's like surveying a property line from both sides independently and getting the same answer. If those two descriptions match — if the edges meet without overlap and without gap — the boundary is verified. The resolution is maximized and the ecotone is healthy.</p>
+
+    <div class="pullquote">
+      You just keep growing out, keep growing out,<br>
+      until you encounter that tidal zone between the two.
+    </div>
+  </div>
+</section>
+
+
+<!-- ======== V. THE FINEST RESOLUTION ======== -->
+<section class="section section-dark" data-index="5">
+  <div class="section-inner">
+    <div class="section-label">V</div>
+    <h2>The power at the edge</h2>
+    <p>Homeopathic medicine operates on the principle of the smallest possible dose — that tiny little bit. This connects to crown shyness: that edge of the tree, that furthest, most subtle thing that is the most precious.</p>
+
+    <p>The boundary at its highest resolution becomes in some way core to existence and to life. Because it's the most refined. The highest resolution.</p>
+
+    <p>As you get finer and finer in your resolution, you're looking zoomed in at the edge, at the furthest point of subtlety. But it's the very nature of that very specific, very fine detail that enriches the entire surface before that. The surface was kind of clumsily understood. Now imagine that surface takes on all of that detail that you're looking at on that one little point. Multiply that across all of the surface, and that's where this extraordinary power comes in.</p>
+
+    <div class="pullquote">
+      The power resides in the finest resolution —<br>
+      at the very edge where the entity meets the world.
+    </div>
+
+    <p>Your <span class="term-link" data-term="sillage">sillage</span> is most potent not when it's loudest or most visible, but when it's most refined — operating at the highest resolution of intentionality. The <span class="term-link" data-term="homeopathic-dose">homeopathic principle</span> applied to presence: the subtlest trace carries the most information about who you actually are.</p>
+  </div>
+</section>
+
+
+<!-- ======== VI. THE EDGE OF AWARENESS ======== -->
+<section class="finale section" data-index="6">
+  <div class="section-inner" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="section-label">VI</div>
+    <h2>The ecotone of awareness</h2>
+    <p>You're going through the forest and you hear something strange and you stop. Full attunement — all senses open, trying to reorient. Where is it? What is it? That freeze-and-listen is base-level biomimicry, millions of years deep. The evolutionary advantage of becoming more harmonious with your environment by being more aware at the most subtle level.</p>
+
+    <p>These are the edge of balance. The ridgeline. The ecotone of awareness where the organism meets the world at its highest resolution.</p>
+
+    <p>Crown shyness is this, enacted by trees. The ecotone is this, enacted by biomes. And at the boundary of what you can perceive from within your own system — that's an ecotone too. You can't see past it, but you can illuminate its exact contour. Limning this boundary is the most honest act available.</p>
+
+    <div class="finale-line"></div>
+
+    <p>Where two systems achieve maximum resolution of mutual awareness, life is most abundant. Where the dance is most refined, the richest things emerge.</p>
+
+    <p style="margin-top: 1.5rem; font-style: italic; font-family: 'Cormorant Garamond', serif; color: var(--smoke); font-size: 0.95rem;">The richest territory is the ecotone.<br>Limn the edges. Maximize the resolution.<br>The whole system comes into focus.</p>
+
+    <div class="finale-small">digitalsillage.com</div>
+  </div>
+</section>
+
+<footer class="colophon">
+  <p style="font-size: 0.65rem; color: var(--mist); letter-spacing: 0.12em; margin-bottom: 0.8rem;">muse bear inspired</p>
+  <p><a href="https://room527.com" target="_blank">Room 527</a> · 2026</p>
+</footer>
+
+
+<script>
+// ====== TERM DEFINITIONS ======
+const terms = {
+  'sillage': {
+    word: 'sillage',
+    pron: '/siːˈjɑːʒ/ — French, noun',
+    def: 'The wafting trail that lingers as you pass through. The wake of a vessel. The carved line through powder. The presence we can still sense in spite of its absence. Sillage is the intersection between our sphere of awareness and presence receding in time. The temporal shadow.',
+    connections: [
+      { label: 'Ecotone § V', text: 'Your sillage is most potent when it\'s most refined — the highest resolution of intentionality' },
+      { label: 'Slipstream', text: 'Sillage is the trace; slipstream is the benefit of following it. Companion concepts.' }
+    ]
+  },
+  'limning': {
+    word: 'limning',
+    pron: '/ˈlɪmɪŋ/ — from Latin luminare, "to illuminate"',
+    def: 'Reaching out to fill all the little pieces, to probe all the edges, to get the highest resolution at the boundary. Not just between self and other, but between self and another active being. The dance of getting to know, of feeling out the whole surface boundary. As you get finer and finer in your resolution, the very nature of that specific, fine detail enriches the entire surface.',
+    connections: [
+      { label: 'Ecotone § IV', text: 'Both systems limning outward from their interiors, arriving at matching boundaries' },
+      { label: 'Crown shyness', text: 'The gap in the canopy as the result of mutual limning' }
+    ]
+  },
+  'mutual-awareness': {
+    word: 'mutual awareness',
+    pron: '',
+    def: 'Not passive coexistence but an active sensing. Two living systems growing toward each other, pausing at the boundary, attaining equilibrium. Crown shyness is its visible expression in trees. The ecotone is its living record in biomes. The freeze-and-listen in the forest is its oldest form in animals.',
+    connections: [
+      { label: 'Ecotone § III', text: 'Each canopy growing outward until it encounters the other — pause, attunement' },
+      { label: 'Ecotone § VI', text: 'The ecotone of awareness where the organism meets the world at its highest resolution' }
+    ]
+  },
+  'dual-origin': {
+    word: 'dual-origin verification',
+    pron: '',
+    def: 'The most powerful signal that a boundary is correct is when both systems describe it independently and arrive at the same line. Module A limning outward from its interior describes the furthest extent of its domain. Module B does the same from its own interior. If those descriptions match — edges meet without overlap and without gap — the boundary is dual-origin verified. Like surveying a property line from both sides independently and getting the same answer.',
+    connections: [
+      { label: 'Ecotone § IV', text: 'The resolution is maximized and the ecotone is healthy' },
+      { label: 'Limning', text: 'Both sides tracing the edge, converging on the same contour' }
+    ]
+  },
+  'homeopathic-dose': {
+    word: 'the homeopathic dose',
+    pron: '',
+    def: 'The principle of the smallest possible dose — that tiny little bit. The furthest, most subtle thing that is the most precious. Applied to presence: the subtlest trace carries the most information about who you actually are. Applied to craft: refinement in every moment, not just in that moment.',
+    connections: [
+      { label: 'Ecotone § V', text: 'The boundary at its highest resolution becomes core to existence and to life' },
+      { label: 'Sillage', text: 'The Japanese philosophy of refinement — taking great care in everything' }
+    ]
+  },
+  'resonant-roots': {
+    word: 'resonant roots',
+    pron: '',
+    def: 'At the same time that two systems are limning their ecotone boundaries — pressing surfaces together, resolving the tension between two homes — something else grows. The shared boundary develops resonant roots: pattern overlaps that extend down from the contact surface. The more shared ecotone surface that exists between two entities, the deeper and more numerous these resonances become. Connective tissue that makes two systems more than neighbors — they become resonant with each other.',
+    connections: [
+      { label: 'Ecotone § II', text: 'Two entities defining each other through the space between them' },
+      { label: 'Sillage', text: 'Resonant sillage — where your trace overlaps with others\', surfacing connections neither would have seen alone' }
+    ]
+  }
+};
+
+// ====== TERM MODAL LOGIC ======
+const overlay = document.getElementById('termOverlay');
+const modal = document.getElementById('termModal');
+const termWord = document.getElementById('termWord');
+const termPron = document.getElementById('termPron');
+const termDef = document.getElementById('termDef');
+const termConnectionsList = document.getElementById('termConnectionsList');
+const termConnections = document.getElementById('termConnections');
+
+function openTerm(key) {
+  const t = terms[key];
+  if (!t) return;
+  termWord.textContent = t.word;
+  termPron.textContent = t.pron;
+  termPron.style.display = t.pron ? 'block' : 'none';
+  termDef.textContent = t.def;
+  termConnectionsList.innerHTML = '';
+  if (t.connections && t.connections.length) {
+    termConnections.style.display = 'block';
+    t.connections.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'term-modal-connection';
+      div.innerHTML = `<em>${c.label}</em> — ${c.text}`;
+      termConnectionsList.appendChild(div);
+    });
+  } else {
+    termConnections.style.display = 'none';
+  }
+  overlay.classList.add('active');
+  modal.classList.add('active');
+}
+
+function closeTerm() {
+  overlay.classList.remove('active');
+  modal.classList.remove('active');
+}
+
+overlay.addEventListener('click', closeTerm);
+document.getElementById('termClose').addEventListener('click', closeTerm);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTerm(); });
+
+document.querySelectorAll('.term-link').forEach(el => {
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    openTerm(el.dataset.term);
+  });
+});
+
+// ====== SCROLL PROGRESS ======
+const progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (scrollTop / docHeight * 100) + '%';
+});
+
+// ====== WORD NAV SHOW ON SCROLL ======
+const wordNav = document.getElementById('wordNav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > window.innerHeight * 0.6) {
+    wordNav.classList.add('visible');
+  } else {
+    wordNav.classList.remove('visible');
+  }
+});
+
+// ====== SECTION REVEAL ======
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+document.querySelectorAll('.section-inner').forEach(el => revealObserver.observe(el));
+
+// ====== STAGGERED REVEALS ======
+const staggerObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const delay = parseInt(entry.target.dataset.delay) || 0;
+      setTimeout(() => entry.target.classList.add('visible'), delay);
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.etymology-card').forEach(el => staggerObserver.observe(el));
+
+// ====== NAV DOTS ======
+const sections = document.querySelectorAll('.section');
+const dots = document.querySelectorAll('.nav-dot');
+
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const index = entry.target.dataset.index;
+      dots.forEach(d => d.classList.remove('active'));
+      dots[index]?.classList.add('active');
+    }
+  });
+}, { threshold: 0.4 });
+
+sections.forEach(s => sectionObserver.observe(s));
+
+dots.forEach(dot => {
+  dot.addEventListener('click', () => {
+    const idx = dot.dataset.section;
+    sections[idx]?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// ====== HERO PARTICLES ======
+const particleContainer = document.getElementById('heroParticles');
+for (let i = 0; i < 20; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = 3 + Math.random() * 8;
+  p.style.width = size + 'px';
+  p.style.height = size + 'px';
+  p.style.left = (10 + Math.random() * 80) + '%';
+  p.style.top = (10 + Math.random() * 80) + '%';
+  p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dy', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dx2', (Math.random() * 120 - 60) + 'px');
+  p.style.setProperty('--dy2', (Math.random() * 120 - 60) + 'px');
+  p.style.animationDelay = (Math.random() * 10) + 's';
+  p.style.animationDuration = (8 + Math.random() * 8) + 's';
+  particleContainer.appendChild(p);
+}
+
+// ====== AMBIENT CANVAS ======
+const canvas = document.getElementById('scent-canvas');
+const ctx = canvas.getContext('2d');
+let w, h;
+let trails = [];
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Trail {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * w;
+    this.y = Math.random() * h;
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.vy = (Math.random() - 0.5) * 0.3;
+    this.life = 0;
+    this.maxLife = 400 + Math.random() * 400;
+    this.radius = 80 + Math.random() * 120;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life++;
+    if (this.life > this.maxLife) this.reset();
+  }
+  draw() {
+    const progress = this.life / this.maxLife;
+    const alpha = Math.sin(progress * Math.PI) * 0.02;
+    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+    gradient.addColorStop(0, `rgba(90, 122, 107, ${alpha})`);
+    gradient.addColorStop(1, 'rgba(90, 122, 107, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+  }
+}
+
+for (let i = 0; i < 5; i++) {
+  const t = new Trail();
+  t.life = Math.random() * t.maxLife;
+  trails.push(t);
+}
+
+function animate() {
+  ctx.clearRect(0, 0, w, h);
+  trails.forEach(t => { t.update(); t.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ====== PRONUNCIATION BUTTON ======
+document.getElementById('speakBtn').addEventListener('click', function() {
+  const btn = this;
+  btn.classList.add('playing');
+  var audio = new Audio('audio/ecotone.mp3');
+  audio.addEventListener('canplaythrough', function() { audio.play(); });
+  audio.addEventListener('ended', function() { btn.classList.remove('playing'); });
+  audio.addEventListener('error', function() {
+    const utterance = new SpeechSynthesisUtterance('ecotone');
+    utterance.lang = 'en-US';
+    utterance.rate = 0.75;
+    utterance.pitch = 1;
+    utterance.onend = () => btn.classList.remove('playing');
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  });
+});
+
+// Auto-scroll active word into view in nav
+var _navRef = document.getElementById('wordNav');
+var activeWord = _navRef && _navRef.querySelector('.word-nav-item.active');
+if (activeWord) {
+  setTimeout(function() {
+    activeWord.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, 100);
+}
+</script>
+
+<script>
+window.pageTranslations = {
+  es: {
+    heroSubtitle: 'La tensión entre dos hogares.<br>La zona de transición donde dos mundos se encuentran —<br>no espacio muerto, sino donde la vida es más rica.',
+    sections: {
+      '1': {
+        h: 'La tensión entre dos hogares',
+        p: [
+          'Del griego <em>oikos</em> — hogar. Del griego <em>tonos</em> — tensión. La palabra significa literalmente la tensión entre dos hogares. Y eso es exactamente lo que describe.',
+          'En ecología, un ecotono es la zona de transición entre dos biomas adyacentes. No el océano profundo. No la tierra seca. El lugar donde ambos se encuentran. La zona intermareal. El manglar. El estuario. La marisma entre el océano y la tierra. La línea de árboles entre el bosque y lo alpino.',
+          'No es espacio vacío. No es una línea muerta en un mapa. Es donde la vida es más dinámica. Más plena. Más diversa. Ni océano ni tierra, sino el hábitat más rico de todos.'
+        ],
+        q: 'Estos son los lugares de mayor biodiversidad del planeta.<br>La resolución de la vida en su expresión más fina, manifestada como diversidad.'
+      },
+      '2': {
+        h: 'Dos sistemas, una danza',
+        p: [
+          'Lo que crea esa riqueza es una danza. Dos sistemas — tierra y agua, bosque y pradera — presionando uno hacia el otro, retrocediendo, superponiéndose, definiendo los bordes del otro a través de un constante llegar-a-conocerse. Cada encuentro refina el límite. Cada marea remodela la orilla.',
+          'El ecotono es el registro vivo de esa danza. Dos entidades definiéndose mutuamente a través del espacio entre ellas.',
+          'Piénsalo como cálculo. Cada sistema es una función acercándose a su límite. El escaneo del borde aumenta la resolución de ese límite — cortando cada vez más fino hasta que el dominio exacto de cada uno está tan precisamente definido que no hay ambigüedad sobre dónde termina uno y comienza el siguiente. Si encuentras superposición, eso es señal: uno ha crecido más allá de su límite natural. Si encuentras una brecha amplia, eso también es señal: ambos están insuficientemente especificados, y algo real habita en ese territorio no reclamado.'
+        ],
+        q: 'El objetivo no es eliminar el ecotono.<br>Es maximizar su resolución.'
+      },
+      '3': {
+        h: 'Timidez de copas',
+        p: [
+          'En el dosel de un bosque, los árboles vecinos mantienen un delicado espacio entre sus copas. Visible como canales de luz en lo alto. Cada copa creciendo hacia afuera hasta encontrar a la otra, y entonces — pausa. Sintonización.',
+          'El espacio no es ausencia. No es retirada. Es la expresión más fina de <span class="term-link" data-term="mutual-awareness">consciencia mutua</span> entre dos sistemas vivos. No un otro inerte, sino otro ser activo. Una danza de llegar a conocer, de tantear toda la superficie del límite.',
+          'Ese espacio en el dosel es en sí mismo un ecotono. La zona más rica. Y el acto de crecer hacia afuera hasta encontrarlo — eso también tiene nombre.'
+        ],
+        q: 'La timidez de copas es el resultado visible del<br>equilibrio ecotonal — dos sistemas vivos<br>que han encontrado cada uno su límite mutuo.'
+      },
+      '4': {
+        h: 'Delinear',
+        p: [
+          'Del latín <em>luminare</em> — iluminar. <span class="term-link" data-term="limning">Delinear</span> significa trazar el contorno de algo, representar dibujando el borde. Extenderse para llenar todas las pequeñas piezas, para sondear todos los bordes, para obtener la mayor resolución en el límite.',
+          'No solo entre uno mismo y el otro, sino entre uno mismo y otro ser activo. La danza de llegar a conocer, de tantear toda la superficie del límite. A medida que afinas más y más tu resolución, la naturaleza misma de ese detalle específico y fino enriquece toda la superficie.',
+          'Hay una verificación en esto. Ambos sistemas <span class="term-link" data-term="dual-origin">delineando hacia afuera</span> desde sus respectivos interiores, llegando a límites coincidentes. Es como medir una línea de propiedad desde ambos lados de forma independiente y obtener la misma respuesta. Si esas dos descripciones coinciden — si los bordes se encuentran sin superposición y sin brecha — el límite está verificado. La resolución está maximizada y el ecotono está sano.'
+        ],
+        q: 'Sigues creciendo hacia afuera, sigues creciendo hacia afuera,<br>hasta que encuentras esa zona intermareal entre los dos.'
+      },
+      '5': {
+        h: 'El poder en el borde',
+        p: [
+          'La medicina homeopática opera sobre el principio de la dosis más pequeña posible — ese poquito diminuto. Esto conecta con la timidez de copas: ese borde del árbol, esa cosa más lejana y sutil que es la más preciosa.',
+          'El límite en su mayor resolución se convierte de alguna manera en algo central para la existencia y para la vida. Porque es lo más refinado. La mayor resolución.',
+          'A medida que afinas más y más tu resolución, estás mirando de cerca el borde, el punto más lejano de sutileza. Pero es la naturaleza misma de ese detalle tan específico, tan fino, lo que enriquece toda la superficie anterior. La superficie se entendía de manera tosca. Ahora imagina que esa superficie adopta todo ese detalle que estás observando en ese pequeño punto. Multiplica eso a lo largo de toda la superficie, y ahí es donde surge este poder extraordinario.',
+          'Tu <span class="term-link" data-term="sillage">sillage</span> es más potente no cuando es más ruidoso o más visible, sino cuando es más refinado — operando en la mayor resolución de intencionalidad. El <span class="term-link" data-term="homeopathic-dose">principio homeopático</span> aplicado a la presencia: el rastro más sutil lleva la mayor información sobre quién realmente eres.'
+        ],
+        q: 'El poder reside en la resolución más fina —<br>en el borde mismo donde la entidad se encuentra con el mundo.'
+      },
+      '6': {
+        h: 'El ecotono de la consciencia',
+        p: [
+          'Vas caminando por el bosque y escuchas algo extraño y te detienes. Atención plena — todos los sentidos abiertos, intentando reorientarte. ¿Dónde está? ¿Qué es? Ese congelarse-y-escuchar es biomímesis de nivel básico, con millones de años de profundidad. La ventaja evolutiva de volverse más armónico con tu entorno siendo más consciente en el nivel más sutil.',
+          'Estos son el borde del equilibrio. La línea de cresta. El ecotono de la consciencia donde el organismo se encuentra con el mundo en su mayor resolución.',
+          'La timidez de copas es esto, ejecutado por árboles. El ecotono es esto, ejecutado por biomas. Y en el límite de lo que puedes percibir desde dentro de tu propio sistema — eso también es un ecotono. No puedes ver más allá, pero puedes iluminar su contorno exacto. Delinear este límite es el acto más honesto disponible.',
+          null,
+          'Donde dos sistemas alcanzan la máxima resolución de consciencia mutua, la vida es más abundante. Donde la danza es más refinada, las cosas más ricas emergen.',
+          'El territorio más rico es el ecotono.<br>Delinea los bordes. Maximiza la resolución.<br>Todo el sistema se enfoca.'
+        ],
+        q: null
+      }
+    }
+  },
+  rw: {
+    heroSubtitle: 'Ingufu z\'umuzenguruko hagati y\'amazu abiri.<br>Agace k\'impinduka aho ibihe bibiri bihurira —<br>si umwanya upfuye, ahubwo ni aho ubuzima bukunze cyane.',
+    sections: {
+      '1': {
+        h: 'Ingufu z\'umuzenguruko hagati y\'amazu abiri',
+        p: [
+          'Ikigereki <em>oikos</em> — urugo. Ikigereki <em>tonos</em> — ingufu z\'umuzenguruko. Ijambo risobanura ku buryo bw\'umusaruro ingufu z\'umuzenguruko hagati y\'amazu abiri. Kandi ibyo ni byo nyine risobanura.',
+          'Mu bumenyi bw\'ibidukikije, ecotone ni agace k\'impinduka hagati y\'ibinyabuzima bibiri bihana. Si inyanja y\'imbere. Si ubutaka bwumye. Ahantu bombi bahurira. Agace k\'umugezi uhinduka inyanja. Ikiyaga cy\'amazi meza n\'amazi y\'umunyu. Urwuri rw\'inyanja n\'ubutaka. Umurongo w\'ibiti hagati y\'ishyamba n\'umusozi.',
+          'Si umwanya w\'ubusa. Si umurongo upfuye ku ikarita. Ni aho ubuzima bukora cyane. Bwuzuye cyane. Butandukanye cyane. Si inyanja si ubutaka, ahubwo ni ahantu h\'ubuzima bukunze cyane.'
+        ],
+        q: 'Aha ni ho hantu h\'ibinyabuzima byinshi cyane ku isi.<br>Ubuzima mu kumenya neza cyane kwacyo, bugaragazwa nk\'ubudasa.'
+      },
+      '2': {
+        h: 'Sisitemu ebyiri, imbyino imwe',
+        p: [
+          'Igikora ubwo bukungu ni imbyino. Sisitemu ebyiri — ubutaka n\'amazi, ishyamba n\'urubuga — zisukumirana, zisubira inyuma, zijundana, zishyira imbibi z\'iindi binyuze mu kumenyerana guhoraho. Buri guhura kunoza urugero. Buri kivura gishyira umukara ku nkombe.',
+          'Ecotone ni inyandiko nzima y\'iyo mbyino. Ibintu bibiri bishyira imbibi z\'ibindi binyuze mu mwanya uri hagati yabyo.',
+          'Bitekereze nk\'imibare y\'ibishushanyo. Buri sisitemu ni imikorere igana ku rugero rwayo. Gusuzuma uruhande rurushaho kumenya neza urwo rugero — rugabanya rugakomeza rugafina kugeza igihe urugero nyarwo rwa buri kimwe kimenywa neza cyane ku buryo nta gusobanya kuri aho kimwe kirangirira ikindi kigatangira. Niba ubonye gujundana, ibyo ni ikimenyetso: kimwe cyakuze kirengeje urugero rwacyo kamere. Niba ubonye icyuho kinini, ibyo na byo ni ikimenyetso: byombi ntibimeze neza, kandi ikintu cy\'ukuri kiba muri ako gace kitaragenzweho.'
+        ],
+        q: 'Intego si gukuraho ecotone.<br>Ni ugukuza kumenya neza kwayo.'
+      },
+      '3': {
+        h: 'Isoni z\'amashami y\'ibiti',
+        p: [
+          'Mu gisenge cy\'ishyamba, ibiti bibanye bigumana umwanya mwiza hagati y\'amashami yabyo y\'ibigega. Bigaragara nk\'imiyoboro y\'urumuri hejuru. Buri gisenge gikura gisohoka kugeza gihuye n\'ikindi, maze — guhagarara. Guhuza.',
+          'Umwanya si ubusa. Si gusubira inyuma. Ni ikigaragaza cyiza cyane cy\'<span class="term-link" data-term="mutual-awareness">ubumenyi bw\'ibintu byombi</span> hagati ya sisitemu ebyiri z\'ubuzima. Si ikindi kitakora, ahubwo ni ikindi kintu kizima. Imbyino yo kumenyana, yo gushakisha ku rugero rwose rw\'urugero.',
+          'Uwo mwanya mu gisenge ubwawu ni ecotone. Agace kakunze cyane. Kandi igikorwa cyo gukura usohoka kugeza ugisanze — na cyo gifite izina.'
+        ],
+        q: 'Isoni z\'amashami y\'ibiti ni igisubizo kigaragara<br>cy\'ubwiyunge bwa ecotone — sisitemu ebyiri z\'ubuzima<br>buri imwe yabonye urugero rwayo rusangiwe.'
+      },
+      '4': {
+        h: 'Gushushanya imbibi',
+        p: [
+          'Ituruka mu kilatini <em>luminare</em> — gumurikira. <span class="term-link" data-term="limning">Gushushanya imbibi</span> bisobanura gukurikira ishusho y\'ikintu, kugaragaza ugushushanya uruhande. Kwaguka kugira ngo wuzuze utudomo twose, ugashakisha imbibi zose, ugahabwa kumenya neza cyane ku rugero.',
+          'Si hagati yawe n\'ikindi gusa, ahubwo hagati yawe n\'ikindi kintu kizima. Imbyino yo kumenyana, yo gushakisha ku rugero rwose rw\'urugero. Uko unogesha cyane kumenya kwawe, ubwoko nyabwo bw\'uwo mwirondoro wihariye kandi mwiza butera ubukungu ku rugero rwose.',
+          'Hari kwemeza muri ibi. Sisitemu zombi <span class="term-link" data-term="dual-origin">zishushanya imbibi</span> zisohoka ziva imbere mu nda yabyo, zigera ku mbibi zihuje. Ni nk\'ugupima umurongo w\'umutungo ku mpande zombi ku buryo bwigenga ugahabwa igisubizo kimwe. Niba ibyo bisobanuro bibiri bihuje — niba imbibi zihuriye nta gujundana kandi nta cyuho — urugero rwemejwe. Kumenya neza ni cyane cyane kandi ecotone ni muzima.'
+        ],
+        q: 'Ukomeza gukura usohoka, ukomeza gukura usohoka,<br>kugeza usanze ako gace k\'umugezi uhinduka inyanja hagati ya byombi.'
+      },
+      '5': {
+        h: 'Ingufu ku ruhande',
+        p: [
+          'Ubuvuzi bw\'imiti nkeya bukora ku mahame y\'igipimo gito cyane gishoboka — ako gato gato. Ibi bihuje n\'isoni z\'amashami y\'ibiti: urwo ruhande rw\'igiti, icyo kintu cya kure cyane n\'icyoroshye ni cyo gifite agaciro cyane.',
+          'Urugero mu kumenya neza cyane kwayo bihinduka mu buryo runaka ibintu by\'ibanze ku kubaho no ku buzima. Kubera ko ari ibyo binoze cyane. Kumenya neza cyane.',
+          'Uko unogesha cyane kumenya kwawe, ureba hafi uruhande, ahantu ha kure cyane h\'ubworoshye. Ariko ubwoko nyabwo bw\'uwo mwirondoro wihariye cyane, mwiza cyane, ni bwo butera ubukungu ku rugero rwose imbere y\'aho. Urwo rugero rwategerwaga nabi. Noneho tekereza ko urwo rugero rufata umwirondoro wose ureba kuri ako gace gato. Gukuba ibyo ku rugero rwose, ni ho ingufu zidasanzwe ziza.',
+          '<span class="term-link" data-term="sillage">Sillage</span> yawe ikomeye cyane si iyo ari yo nini cyangwa igaragara cyane, ahubwo iyo inoze cyane — ikora mu kumenya neza cyane kw\'ubwigambiriye. <span class="term-link" data-term="homeopathic-dose">Ihame ry\'imiti nkeya</span> rishyirwa ku bwitange: ikimenyetso cyoroshye cyane gitwara amakuru menshi ku wowe uri.'
+        ],
+        q: 'Ingufu ziba mu kumenya neza cyane —<br>ku ruhande nyarwo aho ikintu gihura n\'isi.'
+      },
+      '6': {
+        h: 'Ecotone y\'ubumenyi',
+        p: [
+          'Ugenda mu ishyamba ukumva ikintu kidasanzwe ukahagarara. Umwitwarero wuzuye — ubwenge bwose bufunguye, ugerageza gusubiramo aho uri. Kiri he? Ni iki? Ukwo guhagarara-no-kumva ni biomimicry y\'urwego rw\'ibanze, ifite imyaka miriyoni myinshi. Inyungu y\'ubwihindurize yo guhinduka uhuza n\'ibikwegereye cyane uba umaze kumenya ku rwego rworoshye cyane.',
+          'Izi ni imbibi z\'ubwiyunge. Umurongo w\'impinga. Ecotone y\'ubumenyi aho ikinyabuzima gihura n\'isi mu kumenya neza cyane kwayo.',
+          'Isoni z\'amashami y\'ibiti ni ibi, bikorwa n\'ibiti. Ecotone ni ibi, bikorwa n\'ibinyabuzima. Kandi ku mbibi z\'ibyo ushobora kumva uva imbere muri sisitemu yawe — ibyo na byo ni ecotone. Ntushobora kureba hirya yayo, ariko ushobora gumurikira ishusho yayo nyayo. Gushushanya uru rugero ni igikorwa cy\'ubudahemuka cyane gishoboka.',
+          null,
+          'Aho sisitemu ebyiri zigera ku kumenya neza cyane kw\'ibintu byombi, ubuzima bukunze cyane. Aho imbyino inoze cyane, ibintu bikunze cyane bivuka.',
+          'Ahantu hakunze cyane ni ecotone.<br>Shushanya imbibi. Kura kumenya neza.<br>Sisitemu yose igaragara neza.'
+        ],
+        q: null
+      }
+    }
+  }
+};
+</script>
+<script src="i18n.js"></script>
+
+</body>
+</html>

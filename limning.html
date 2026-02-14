@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Limning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFBF7;
+    --amber: #C4956A;
+    --deep-amber: #A67744;
+    --umber: #3D2B1F;
+    --deep-umber: #2A1D14;
+    --smoke: #8B7D6B;
+    --mist: #D4C9B8;
+    --blush: #E8D5C4;
+    --ink: #1A1210;
+    --faint: rgba(196, 163, 90, 0.08);
+    /* limning — illumination, gold, traced light */
+    --lumen: #C4A35A;
+    --deep-lumen: #9A7B3A;
+    --trace: #DFC98A;
+    --light: rgba(196, 163, 90, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--mist) transparent;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm-white);
+    color: var(--umber);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ====== WORD NAV ====== */
+  .word-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    padding: 1.2rem 2rem;
+    background: rgba(253, 251, 247, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(196, 163, 90, 0.08);
+    transform: translateY(-100%);
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .word-nav.visible { transform: translateY(0); }
+
+  .word-nav::-webkit-scrollbar { display: none; }
+  .word-nav-item, .word-nav-dot { flex-shrink: 0; }
+
+  .word-nav-item {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+    color: var(--mist);
+    cursor: pointer;
+    transition: all 0.4s ease;
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 2px;
+  }
+
+  .word-nav-item:hover { color: var(--lumen); }
+  .word-nav-item.active { color: var(--deep-umber); }
+
+  .word-nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--lumen);
+  }
+
+  .word-nav-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--mist);
+    flex-shrink: 0;
+  }
+
+  /* ====== SCROLL PROGRESS ====== */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--lumen), var(--deep-lumen));
+    z-index: 1000;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* ====== NAV DOTS ====== */
+  .nav-dots {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .nav-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mist);
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+  }
+
+  .nav-dot.active {
+    background: var(--lumen);
+    transform: scale(1.6);
+  }
+
+  .nav-dot::after {
+    content: attr(data-label);
+    position: absolute;
+    right: 1.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .nav-dot:hover::after { opacity: 1; }
+
+  /* ====== SECTIONS ====== */
+  .section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem;
+    position: relative;
+  }
+
+  .section-inner {
+    max-width: 680px;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1),
+                transform 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .section-inner.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ====== HERO ====== */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 30%, #ede4c8 0%, var(--warm-white) 60%);
+    z-index: 0;
+  }
+
+  .hero-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--lumen);
+    opacity: 0;
+    animation: drift 12s infinite ease-in-out;
+  }
+
+  @keyframes drift {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    20% { opacity: 0.12; }
+    50% { opacity: 0.06; transform: translate(var(--dx), var(--dy)) scale(1); }
+    80% { opacity: 0.09; }
+    100% { opacity: 0; transform: translate(var(--dx2), var(--dy2)) scale(0.3); }
+  }
+
+  .hero-content { position: relative; z-index: 2; }
+  .hero-word { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(3rem, 7vw, 6rem); color: var(--umber); letter-spacing: 0.12em; margin-bottom: 0.5rem; opacity: 0; animation: fadeUp 2s 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .hero-pronunciation { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 300; font-size: 1.1rem; color: var(--smoke); letter-spacing: 0.08em; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 2s 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards; display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
+
+  .speak-btn { background: none; border: none; cursor: pointer; padding: 0.3rem; border-radius: 50%; transition: all 0.4s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .speak-btn svg { width: 16px; height: 16px; fill: none; stroke: var(--mist); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.4s ease; }
+  .speak-btn:hover svg { stroke: var(--lumen); }
+  .speak-btn.playing svg { stroke: var(--lumen); }
+
+  .hero-line { width: 40px; height: 1px; background: var(--lumen); margin: 0 auto 2.5rem; opacity: 0; animation: fadeUp 2s 1s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+
+  .hero-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    color: var(--smoke);
+    line-height: 1.9;
+    max-width: 520px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeUp 2s 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .scroll-cue { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%); opacity: 0; animation: fadeUp 2s 2s cubic-bezier(0.23, 1, 0.32, 1) forwards; z-index: 2; }
+  .scroll-cue span { display: block; width: 1px; height: 40px; background: linear-gradient(to bottom, var(--lumen), transparent); margin: 0 auto; animation: pulse-line 2.5s infinite ease-in-out; }
+
+  @keyframes pulse-line {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+    50% { opacity: 0.8; transform: scaleY(1); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(25px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ====== TYPOGRAPHY ====== */
+  h2 { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); color: var(--deep-umber); margin-bottom: 2rem; line-height: 1.25; letter-spacing: 0.02em; }
+
+  .section-label { font-family: 'DM Sans', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--lumen); margin-bottom: 1.5rem; font-weight: 500; }
+
+  p { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 1.02rem; line-height: 1.85; color: var(--umber); margin-bottom: 1.4rem; }
+  p:last-child { margin-bottom: 0; }
+
+  .pullquote {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.3rem, 3vw, 1.7rem);
+    line-height: 1.6;
+    color: var(--deep-lumen);
+    padding: 2rem 0;
+    border-top: 1px solid var(--light);
+    border-bottom: 1px solid var(--light);
+    margin: 2.5rem 0;
+    text-align: center;
+  }
+
+  /* ====== DARK SECTION ====== */
+  .section-dark {
+    background: var(--deep-umber);
+    color: var(--cream);
+  }
+
+  .section-dark h2 { color: var(--blush); }
+  .section-dark p { color: var(--mist); }
+  .section-dark .section-label { color: var(--trace); }
+  .section-dark .pullquote { color: var(--trace); border-color: rgba(196, 163, 90, 0.15); }
+  .section-dark .term-link { color: inherit; border-bottom-color: rgba(196, 163, 90, 0.15); }
+  .section-dark .term-link:hover { color: var(--trace); border-bottom-color: rgba(196, 163, 90, 0.4); }
+
+  /* ====== WARM SECTION ====== */
+  .section-warm { background: var(--cream); }
+
+  /* ====== GILDED SECTION ====== */
+  .section-gilded {
+    background: #2E2818;
+    color: #e8dcc4;
+  }
+
+  .section-gilded h2 { color: var(--trace); }
+  .section-gilded p { color: #c4b89a; }
+  .section-gilded .section-label { color: var(--lumen); }
+  .section-gilded .pullquote { color: var(--trace); border-color: rgba(196, 163, 90, 0.15); }
+  .section-gilded .term-link { color: inherit; border-bottom-color: rgba(196, 163, 90, 0.15); }
+  .section-gilded .term-link:hover { color: var(--trace); border-bottom-color: rgba(196, 163, 90, 0.4); }
+
+  /* ====== TERM LINKS ====== */
+  .term-link { color: inherit; border-bottom: 1px solid rgba(196, 163, 90, 0.12); cursor: pointer; transition: border-color 0.4s ease, color 0.4s ease; position: relative; text-decoration: none; }
+  .term-link:hover { color: var(--deep-lumen); border-bottom-color: rgba(196, 163, 90, 0.4); }
+
+  /* ====== TERM MODAL ====== */
+  .term-modal-overlay { position: fixed; inset: 0; background: rgba(26, 18, 16, 0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 500; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+  .term-modal-overlay.active { opacity: 1; pointer-events: all; }
+  .term-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); z-index: 501; background: var(--warm-white); border: 1px solid rgba(196, 163, 90, 0.15); border-radius: 3px; max-width: 480px; width: calc(100% - 3rem); padding: 2.5rem; opacity: 0; pointer-events: none; transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.23, 1, 0.32, 1); }
+  .term-modal.active { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) scale(1); }
+  .term-modal-close { position: absolute; top: 1rem; right: 1.2rem; background: none; border: none; font-size: 1.2rem; color: var(--mist); cursor: pointer; transition: color 0.3s ease; line-height: 1; }
+  .term-modal-close:hover { color: var(--umber); }
+  .term-modal-word { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 1.6rem; color: var(--deep-umber); margin-bottom: 0.3rem; letter-spacing: 0.05em; }
+  .term-modal-pron { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 0.85rem; color: var(--smoke); margin-bottom: 1.2rem; }
+  .term-modal-def { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 0.92rem; line-height: 1.8; color: var(--umber); margin-bottom: 1.2rem; }
+  .term-modal-connections { border-top: 1px solid var(--faint); padding-top: 1rem; margin-top: 0.5rem; }
+  .term-modal-connections-label { font-family: 'DM Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--lumen); margin-bottom: 0.6rem; font-weight: 500; }
+  .term-modal-connection { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; color: var(--smoke); line-height: 1.7; padding-left: 0.8rem; border-left: 1px solid var(--faint); margin-bottom: 0.5rem; }
+  .term-modal-connection em { color: var(--deep-lumen); font-style: normal; }
+
+  /* ====== FINALE ====== */
+  .finale { text-align: center; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 70%, #ede4c8 0%, var(--warm-white) 50%); }
+  .finale h2 { font-size: clamp(2rem, 5vw, 3.2rem); margin-bottom: 1.5rem; }
+  .finale p { max-width: 520px; text-align: center; }
+  .finale-line { width: 60px; height: 1px; background: var(--lumen); margin: 2.5rem auto; }
+  .finale-small { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--smoke); margin-top: 3rem; }
+
+  /* ====== COLOPHON ====== */
+  .colophon { text-align: center; padding: 4rem 2rem; background: var(--warm-white); }
+  .colophon p { font-size: 0.75rem; color: var(--mist); letter-spacing: 0.05em; }
+  .colophon a { color: var(--lumen); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.3s ease; }
+  .colophon a:hover { border-bottom-color: var(--lumen); }
+
+  /* ====== CANVAS ====== */
+  #scent-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.3; }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 768px) {
+    .section { padding: 4rem 1.5rem; }
+    .nav-dots { right: 1rem; gap: 1rem; }
+    .nav-dot::after { display: none; }
+    .hero-word { letter-spacing: 0.08em; }
+    .word-nav { gap: 1.2rem; padding: 1rem 1.5rem; }
+    .word-nav-item { font-size: 0.82rem; letter-spacing: 0.06em; }
+  }
+
+  @media (max-width: 480px) {
+    .section { padding: 3rem 1.2rem; }
+    .nav-dots { display: none; }
+    .word-nav { gap: 0.8rem; }
+    .word-nav-item { font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<canvas id="scent-canvas"></canvas>
+
+<!-- ====== WORD NAV ====== -->
+<nav class="word-nav" id="wordNav">
+  <a class="word-nav-item" data-word="sillage" href="/">sillage</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="apapachar" href="apapachar.html">apapachar</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ecotone" href="ecotone.html">ecotone</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="crown-shyness" href="crown-shyness.html">crown shyness</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="lacuna" href="lacuna.html">lacuna</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="centripetal" href="centripetal.html">centripetal</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item active" data-word="limning">limning</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="nepantla" href="nepantla.html">nepantla</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ollin" href="ollin.html">ollin</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="resonance" href="resonance.html">resonance</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="igitwenge" href="igitwenge.html">igitwenge</a>
+</nav>
+
+<!-- ====== NAV DOTS ====== -->
+<nav class="nav-dots" id="navDots">
+  <div class="nav-dot active" data-section="0" data-label="Limning"></div>
+  <div class="nav-dot" data-section="1" data-label="To Illuminate"></div>
+  <div class="nav-dot" data-section="2" data-label="The Dance"></div>
+  <div class="nav-dot" data-section="3" data-label="Both Sides"></div>
+  <div class="nav-dot" data-section="4" data-label="Traced in Light"></div>
+</nav>
+
+<!-- ====== TERM MODAL ====== -->
+<div class="term-modal-overlay" id="termOverlay"></div>
+<div class="term-modal" id="termModal">
+  <button class="term-modal-close" id="termClose">&times;</button>
+  <div class="term-modal-word" id="termWord"></div>
+  <div class="term-modal-pron" id="termPron"></div>
+  <div class="term-modal-def" id="termDef"></div>
+  <div class="term-modal-connections" id="termConnections">
+    <div class="term-modal-connections-label">Resonances</div>
+    <div id="termConnectionsList"></div>
+  </div>
+</div>
+
+
+<!-- ======== HERO ======== -->
+<section class="hero section" data-index="0">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-content">
+    <div class="hero-word">limning</div>
+    <div class="hero-pronunciation">
+      /&#712;l&#618;m&#618;&#331;/ &#8212; from Latin luminare, &#8220;to illuminate&#8221;
+      <button class="speak-btn" id="speakBtn" aria-label="Hear pronunciation">
+        <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </button>
+    </div>
+    <div class="hero-line"></div>
+    <div class="hero-subtitle">
+      To trace the outline of something.<br>
+      To depict by drawing the edge.<br>
+      To illuminate by touching the boundary.
+    </div>
+  </div>
+  <div class="scroll-cue"><span></span></div>
+</section>
+
+
+<!-- ======== I. TO ILLUMINATE ======== -->
+<section class="section" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">I</div>
+    <h2>The light that lives at edges</h2>
+    <p>The word comes from Latin <em>luminare</em> — to make light. Somewhere along the way, it became the act of tracing outlines, of depicting a thing by drawing its edge. Medieval manuscript illuminators were called limners. They didn't paint the whole surface; they traced the borders with gold leaf, and in doing so, revealed the shape of everything within.</p>
+
+    <p>This is what limning still means: to know a thing by attending to its edge. Not the center — the center is easy. It's the boundary where all the information lives. The contour where one thing ends and another begins.</p>
+
+    <div class="pullquote">
+      Reaching out to fill all the little pieces,<br>
+      to probe all the edges, to get the<br>
+      highest resolution at the boundary.
+    </div>
+
+    <p>There's something deeply honest about it. You can't limn something you haven't looked at closely. The act demands attention — the slow, careful kind. You have to get close enough to see where the edge really falls, not where you assumed it would be.</p>
+  </div>
+</section>
+
+
+<!-- ======== II. THE DANCE ======== -->
+<section class="section section-gilded" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">II</div>
+    <h2>Not between you and an inert other</h2>
+    <p>Here's the part that makes limning more than careful observation. When you're limning the boundary of another living system — another person, another idea, another way of being — you're not tracing the edge of a static object. You're tracing the edge of something that's also moving, also reaching toward you.</p>
+
+    <p>It's the dance of getting to know. Of feeling out the whole surface boundary. Not just between self and other, but between self and another <em>active</em> other. Both systems pressing outward, both sensing, both adjusting. The edge you're tracing is being traced from the other side simultaneously.</p>
+
+    <div class="pullquote">
+      It's with another also active being.<br>
+      And so it is that dance of getting to know,<br>
+      of limning that whole surface boundary.
+    </div>
+
+    <p>Think of two people in conversation who are truly listening. Each one probing the edges of the other's meaning — not to pin it down, but to illuminate it. The understanding that emerges isn't in either person. It lives in the boundary they're both attending to. In the <span class="term-link" data-term="ecotone">ecotone</span> between them.</p>
+  </div>
+</section>
+
+
+<!-- ======== III. BOTH SIDES ======== -->
+<section class="section section-warm" data-index="3">
+  <div class="section-inner">
+    <div class="section-label">III</div>
+    <h2>Dual-origin verification</h2>
+    <p>Both systems limning outward from their respective interiors, arriving at matching boundaries. It's like surveying a property line from both sides independently and getting the same answer.</p>
+
+    <div class="pullquote">
+      Two systems tracing the same edge<br>
+      from opposite sides, converging<br>
+      on the same contour.
+    </div>
+  </div>
+</section>
+
+
+
+<!-- ======== IV. TRACED IN LIGHT ======== -->
+<section class="finale section" data-index="4">
+  <div class="section-inner" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="section-label">IV</div>
+    <h2>To illuminate by tracing</h2>
+    <p>The limners knew something we've mostly forgotten. That you don't need to fill the whole page to reveal the whole picture. That the most illuminating act is the careful tracing of where one thing becomes another.</p>
+
+    <p>Every conversation is an act of limning. Every relationship. Every attempt to understand something new. You're reaching outward, probing the edges, getting the highest resolution at the boundary of your knowing.</p>
+
+    <div class="finale-line"></div>
+
+    <p>And when both sides do this — when the tracing is mutual, active, alive — what emerges at the edge isn't just a line. It's light.</p>
+
+    <p style="margin-top: 1.5rem; font-style: italic; font-family: 'Cormorant Garamond', serif; color: var(--smoke); font-size: 0.95rem;">Trace your edges with care.<br>The boundary is where the light enters.<br>The finest resolution is the most illuminating.</p>
+
+    <div class="finale-small">digitalsillage.com</div>
+  </div>
+</section>
+
+<footer class="colophon">
+  <p style="font-size: 0.65rem; color: var(--mist); letter-spacing: 0.12em; margin-bottom: 0.8rem;">muse bear inspired</p>
+  <p><a href="https://room527.com" target="_blank">Room 527</a> · 2026</p>
+</footer>
+
+
+<script>
+// ====== TERM DEFINITIONS ======
+const terms = {
+  'ecotone': {
+    word: 'ecotone',
+    pron: '/\u02c8i\u02d0k\u0259\u02ccto\u028an/ \u2014 from Greek oikos + tonos',
+    def: 'The transition zone between two adjacent biomes \u2014 the salt marsh, the tree line, the estuary. Where biodiversity is highest. The ecotone between two people in conversation is the shared space where understanding lives \u2014 neither one person\u2019s meaning nor the other\u2019s, but the boundary both are limning.',
+    connections: [
+      { label: 'Limning \u00a7 II', text: 'The understanding lives in the boundary they\u2019re both attending to' },
+      { label: 'Crown Shyness', text: 'The gap in the canopy is itself an ecotone \u2014 the richest zone' }
+    ]
+  },
+  'crown-shyness': {
+    word: 'crown shyness',
+    pron: '/kra\u028an \u02c8\u0283a\u026an\u0259s/ \u2014 English, botanical phenomenon',
+    def: 'The delicate gap between neighboring tree crowns. Two canopies that have each limned their own edge until they arrived at the same gap. Not through negotiation \u2014 through the honest, independent act of growing toward your own limit and recognizing when you\u2019ve reached it.',
+    connections: [
+      { label: 'Limning \u00a7 III', text: 'Dual-origin verification \u2014 two systems arriving at the same boundary independently' },
+      { label: 'Ecotone', text: 'The gap is where biodiversity is richest' }
+    ]
+  },
+  'sillage': {
+    word: 'sillage',
+    pron: '/si\u02d0\u02c8j\u0251\u02d0\u0292/ \u2014 French, noun',
+    def: 'The wafting trail that lingers as you pass through. One half of the dual instrument: sillage reads the trace of what was there. It\u2019s the positive space \u2014 the presence you can still sense. The face in the Gestalt figure.',
+    connections: [
+      { label: 'Limning \u00a7 III', text: 'Two systems tracing the same edge from opposite sides' },
+      { label: 'Lacuna', text: 'Complementary instruments tracing the same contour' }
+    ]
+  },
+  'lacuna': {
+    word: 'lacuna',
+    pron: '/l\u0259\u02c8kju\u02d0n\u0259/ \u2014 Latin, noun',
+    def: 'The gap. The absence. The thing conspicuously obvious in its absence. The other half of the dual instrument: lacuna reads the shape of what\u2019s missing. It\u2019s the negative space \u2014 the void that reveals the contour of what was there.',
+    connections: [
+      { label: 'Limning \u00a7 III', text: 'Two systems converging on the same contour' },
+      { label: 'Sillage', text: 'The face and the space between the faces' }
+    ]
+  },
+  'nepantla': {
+    word: 'nepantla',
+    pron: '/ne\u02c8pant\u026ca/ \u2014 Nahuatl',
+    def: 'The space between two worlds. A liminal in-betweenness. The place where your understanding meets its limit is itself a nepantla \u2014 neither full knowledge nor ignorance, but the generative territory between.',
+    connections: [
+      { label: 'Limning \u00a7 IV', text: 'The boundary is where the light enters' },
+      { label: 'Ecotone', text: 'The boundary as the richest, most generative zone' }
+    ]
+  }
+};
+
+// ====== TERM MODAL LOGIC ======
+const overlay = document.getElementById('termOverlay');
+const modal = document.getElementById('termModal');
+const termWord = document.getElementById('termWord');
+const termPron = document.getElementById('termPron');
+const termDef = document.getElementById('termDef');
+const termConnectionsList = document.getElementById('termConnectionsList');
+const termConnections = document.getElementById('termConnections');
+
+function openTerm(key) {
+  const t = terms[key];
+  if (!t) return;
+  termWord.textContent = t.word;
+  termPron.textContent = t.pron;
+  termPron.style.display = t.pron ? 'block' : 'none';
+  termDef.textContent = t.def;
+  termConnectionsList.innerHTML = '';
+  if (t.connections && t.connections.length) {
+    termConnections.style.display = 'block';
+    t.connections.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'term-modal-connection';
+      div.innerHTML = `<em>${c.label}</em> \u2014 ${c.text}`;
+      termConnectionsList.appendChild(div);
+    });
+  } else {
+    termConnections.style.display = 'none';
+  }
+  overlay.classList.add('active');
+  modal.classList.add('active');
+}
+
+function closeTerm() {
+  overlay.classList.remove('active');
+  modal.classList.remove('active');
+}
+
+overlay.addEventListener('click', closeTerm);
+document.getElementById('termClose').addEventListener('click', closeTerm);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTerm(); });
+
+document.querySelectorAll('.term-link').forEach(el => {
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    openTerm(el.dataset.term);
+  });
+});
+
+// ====== SCROLL PROGRESS ======
+const progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (scrollTop / docHeight * 100) + '%';
+});
+
+// ====== WORD NAV ======
+const wordNav = document.getElementById('wordNav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > window.innerHeight * 0.6) {
+    wordNav.classList.add('visible');
+  } else {
+    wordNav.classList.remove('visible');
+  }
+});
+
+// ====== SECTION REVEAL ======
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+document.querySelectorAll('.section-inner').forEach(el => revealObserver.observe(el));
+
+// ====== NAV DOTS ======
+const sections = document.querySelectorAll('.section');
+const dots = document.querySelectorAll('.nav-dot');
+
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const index = entry.target.dataset.index;
+      dots.forEach(d => d.classList.remove('active'));
+      dots[index]?.classList.add('active');
+    }
+  });
+}, { threshold: 0.4 });
+
+sections.forEach(s => sectionObserver.observe(s));
+
+dots.forEach(dot => {
+  dot.addEventListener('click', () => {
+    const idx = dot.dataset.section;
+    sections[idx]?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// ====== HERO PARTICLES ======
+const particleContainer = document.getElementById('heroParticles');
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = 3 + Math.random() * 8;
+  p.style.width = size + 'px';
+  p.style.height = size + 'px';
+  p.style.left = (10 + Math.random() * 80) + '%';
+  p.style.top = (10 + Math.random() * 80) + '%';
+  p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dy', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dx2', (Math.random() * 120 - 60) + 'px');
+  p.style.setProperty('--dy2', (Math.random() * 120 - 60) + 'px');
+  p.style.animationDelay = (Math.random() * 10) + 's';
+  p.style.animationDuration = (8 + Math.random() * 8) + 's';
+  particleContainer.appendChild(p);
+}
+
+// ====== AMBIENT CANVAS ======
+const canvas = document.getElementById('scent-canvas');
+const ctx = canvas.getContext('2d');
+let w, h;
+let trails = [];
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Trail {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * w;
+    this.y = Math.random() * h;
+    this.vx = (Math.random() - 0.5) * 0.25;
+    this.vy = (Math.random() - 0.5) * 0.25;
+    this.life = 0;
+    this.maxLife = 400 + Math.random() * 400;
+    this.radius = 80 + Math.random() * 120;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life++;
+    if (this.life > this.maxLife) this.reset();
+  }
+  draw() {
+    const progress = this.life / this.maxLife;
+    const alpha = Math.sin(progress * Math.PI) * 0.02;
+    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+    gradient.addColorStop(0, `rgba(196, 163, 90, ${alpha})`);
+    gradient.addColorStop(1, 'rgba(196, 163, 90, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+  }
+}
+
+for (let i = 0; i < 5; i++) {
+  const t = new Trail();
+  t.life = Math.random() * t.maxLife;
+  trails.push(t);
+}
+
+function animate() {
+  ctx.clearRect(0, 0, w, h);
+  trails.forEach(t => { t.update(); t.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ====== PRONUNCIATION BUTTON ======
+document.getElementById('speakBtn').addEventListener('click', function() {
+  const btn = this;
+  btn.classList.add('playing');
+  var audio = new Audio('audio/limning.mp3');
+  audio.addEventListener('canplaythrough', function() { audio.play(); });
+  audio.addEventListener('ended', function() { btn.classList.remove('playing'); });
+  audio.addEventListener('error', function() {
+    const utterance = new SpeechSynthesisUtterance('limning');
+    utterance.lang = 'en-US';
+    utterance.rate = 0.75;
+    utterance.pitch = 1;
+    utterance.onend = () => btn.classList.remove('playing');
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  });
+});
+
+// Auto-scroll active word into view in nav
+var wordNavEl = document.getElementById('wordNav');
+var activeWord = wordNavEl && wordNavEl.querySelector('.word-nav-item.active');
+if (activeWord) {
+  setTimeout(function() {
+    activeWord.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, 100);
+}
+</script>
+
+<script>
+window.pageTranslations = {
+  es: {
+    heroSubtitle: 'Trazar el contorno de algo.<br>Representar dibujando el borde.<br>Iluminar tocando el límite.',
+    sections: {
+      '1': {
+        h: 'La luz que vive en los bordes',
+        p: [
+          'La palabra proviene del latín <em>luminare</em> — hacer luz. En algún momento, pasó a significar el acto de trazar contornos, de representar algo dibujando su borde. Los iluminadores de manuscritos medievales se llamaban limners. No pintaban toda la superficie; trazaban los bordes con pan de oro y, al hacerlo, revelaban la forma de todo lo que contenían.',
+          'Esto es lo que limning sigue significando: conocer algo atendiendo a su borde. No el centro — el centro es fácil. Es en el límite donde vive toda la información. El contorno donde una cosa termina y otra comienza.',
+          'Hay algo profundamente honesto en ello. No puedes trazar los bordes de algo que no has observado de cerca. El acto exige atención — la clase lenta y cuidadosa. Tienes que acercarte lo suficiente para ver dónde cae realmente el borde, no donde asumías que estaría.'
+        ],
+        q: 'Alcanzar todas las pequeñas piezas,<br>sondear todos los bordes, obtener la<br>mayor resolución en el límite.'
+      },
+      '2': {
+        h: 'No entre tú y un otro inerte',
+        p: [
+          'Aquí está la parte que hace de limning más que observación cuidadosa. Cuando estás trazando el límite de otro sistema vivo — otra persona, otra idea, otra forma de ser — no estás trazando el borde de un objeto estático. Estás trazando el borde de algo que también se mueve, que también se extiende hacia ti.',
+          'Es la danza de llegar a conocer. De sentir toda la superficie del límite. No solo entre el yo y el otro, sino entre el yo y otro ser <em>activo</em>. Ambos sistemas presionando hacia afuera, ambos sintiendo, ambos ajustándose. El borde que trazas está siendo trazado desde el otro lado simultáneamente.',
+          'Piensa en dos personas conversando que realmente se escuchan. Cada una sondeando los bordes del significado del otro — no para fijarlo, sino para iluminarlo. La comprensión que emerge no está en ninguna de las dos personas. Vive en el límite al que ambas atienden. En la <span class="term-link" data-term="ecotone">ecotonía</span> entre ellas.'
+        ],
+        q: 'Es con otro ser también activo.<br>Y así es esa danza de llegar a conocer,<br>de trazar todo el límite de la superficie.'
+      },
+      '3': {
+        h: 'Verificación de doble origen',
+        p: [
+          'Ambos sistemas trazando hacia afuera desde sus respectivos interiores, llegando a límites coincidentes. Es como medir un lindero desde ambos lados independientemente y obtener la misma respuesta.'
+        ],
+        q: 'Dos sistemas trazando el mismo borde<br>desde lados opuestos, convergiendo<br>en el mismo contorno.'
+      },
+      '4': {
+        h: 'Iluminar trazando',
+        p: [
+          'Los iluminadores sabían algo que hemos olvidado casi por completo. Que no necesitas llenar toda la página para revelar toda la imagen. Que el acto más iluminador es el trazado cuidadoso de donde una cosa se convierte en otra.',
+          'Cada conversación es un acto de limning. Cada relación. Cada intento de comprender algo nuevo. Estás extendiéndote hacia afuera, sondeando los bordes, obteniendo la mayor resolución en el límite de tu conocimiento.',
+          null,
+          'Y cuando ambos lados hacen esto — cuando el trazado es mutuo, activo, vivo — lo que emerge en el borde no es solo una línea. Es luz.'
+        ],
+        q: null
+      }
+    }
+  },
+  rw: {
+    heroSubtitle: 'Gukurikirana imbibi z\'ikintu.<br>Kwerekana ushushanya urukogi.<br>Kumurikira ugakora ku mupaka.',
+    sections: {
+      '1': {
+        h: 'Urumuri rubamo mu mbibi',
+        p: [
+          'Iri jambo rikomoka mu kilatini <em>luminare</em> — gutanga urumuri. Uko igihe cyagendaga, ryahindutse risobanura igikorwa cyo gukurikirana imbibi, cyo kwerekana ikintu ugishushanya urukogi rwarwo. Abashoboye bo mu bihe byo hagati ba manuscrit bitaga limners. Ntibashushanyaga ibintu byose; bashushanyaga imbibi n\'izahabu, kandi muri ubwo buryo, berekanaga ishusho y\'ibintu byose biri imbere.',
+          'Ibyo ni byo limning igisobanuro cyayo: kumenya ikintu ukitayeho ku rukogi rwarwo. Si hagati — hagati ni byoroshye. Ni ku mupaka ubuzima bwose bw\'amakuru bubarizwa. Urukogi aho ikintu kimwe kirangirira n\'ikindi kigatangira.',
+          'Hari ikintu gifite ubunyangamugayo bwinshi muri ibyo. Ntushobora gukurikirana imbibi z\'ikintu utarwitegereje hafi. Igikorwa gisaba kumwitaho — ubwoko bw\'igihe kirekire n\'ubwitonzi. Ugomba kwegera bihagije kugira ngo ubone aho urukogi rugwa by\'ukuri, aho utari wabitekerezaga.'
+        ],
+        q: 'Kugera ku bice byose bito bito,<br>gusuzuma imbibi zose, kubona<br>ibisobanuro birambuye ku mupaka.'
+      },
+      '2': {
+        h: 'Si hagati yawe n\'undi udakorana',
+        p: [
+          'Ngaha ni aho limning iruta kuba kureba gusa neza. Iyo ukurikirana urukogi rw\'undi mushinga w\'ubuzima — undi muntu, ibindi bitekerezo, ubundi buryo bwo kubaho — ntukurikirana urukogi rw\'ikintu kidahinduka. Ukurikirana urukogi rw\'ikintu kigenda na cyo, kigukora na cyo.',
+          'Ni umutambi wo kumenyana. Wo kumva imbibi zose z\'uruhu. Si hagati y\'umwe n\'undi gusa, ahubwo hagati y\'umwe n\'undi <em>ukorana</em>. Imishinga yombi isunitse inyuma, yombi yumva, yombi ihindura. Urukogi ushushanya ruri gushushanywa n\'urundi ruhande icyo gihe kimwe.',
+          'Tekereza abantu babiri baganira kandi bumvikanisha by\'ukuri. Buri wese asuzuma imbibi z\'ibisobanuro by\'undi — atari ukugira ngo abikinge, ahubwo ukugira ngo abyerekane urumuri. Ubumenyi buturuka ntiburi muri umwe muri bo. Buba mu mupaka bombi bitayeho. Muri <span class="term-link" data-term="ecotone">ecotone</span> iri hagati yabo.'
+        ],
+        q: 'Ni hamwe n\'undi kandi ukorana.<br>Ni ko rero uwo mutambi wo kumenyana,<br>wo gukurikirana urukogi rwose rw\'uruhu.'
+      },
+      '3': {
+        h: 'Kwemeza kuva impande zombi',
+        p: [
+          'Imishinga yombi ikurikirana iva imbere muri buri wese, igera ku mipaka ihura. Ni nko gupima umupaka uva impande zombi ku giti cyawe ukabona igisubizo kimwe.'
+        ],
+        q: 'Imishinga ibiri ikurikirana urukogi rumwe<br>iva mu mpande zinyuranye, ihurira<br>ku rukogi rumwe.'
+      },
+      '4': {
+        h: 'Kumurikira ugakurikirana',
+        p: [
+          'Abashoboye bari bazi ikintu twibagiye hafi ya byose. Ko udakeneye kuzuza urupapuro rwose kugira ngo werekane ishusho yose. Ko igikorwa cyane cyo kumurikira ari ugukurikirana neza aho ikintu kimwe gihinduka ikindi.',
+          'Buri kiganiro ni igikorwa cya limning. Buri buhuza. Buri mugerageza wo gusobanukirwa ikintu gishya. Uri kwegurira inyuma, usuzuma imbibi, ubona ibisobanuro birambuye ku mupaka w\'ubumenyi bwawe.',
+          null,
+          'Kandi iyo impande zombi zibikora — iyo ugukurikirana ari kwa bombi, kukorana, kuzima — icyo kituruka ku rukogi si umurongo gusa. Ni urumuri.'
+        ],
+        q: null
+      }
+    }
+  }
+};
+</script>
+<script src="i18n.js"></script>
+
+</body>
+</html>

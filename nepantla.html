@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nepantla</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFBF7;
+    --amber: #C4956A;
+    --deep-amber: #A67744;
+    --umber: #3D2B1F;
+    --deep-umber: #2A1D14;
+    --smoke: #8B7D6B;
+    --mist: #D4C9B8;
+    --blush: #E8D5C4;
+    --ink: #1A1210;
+    --faint: rgba(176, 138, 142, 0.08);
+    /* nepantla — dusk, borderland, rose between worlds */
+    --threshold: #B08A8E;
+    --deep-threshold: #8A656A;
+    --between: #D0B2B5;
+    --light: rgba(176, 138, 142, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--mist) transparent;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm-white);
+    color: var(--umber);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ====== WORD NAV ====== */
+  .word-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; align-items: center; gap: 2.5rem; padding: 1.2rem 2rem; background: rgba(253, 251, 247, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(176, 138, 142, 0.08); transform: translateY(-100%); transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+  .word-nav.visible { transform: translateY(0); }
+  .word-nav::-webkit-scrollbar { display: none; }
+  .word-nav-item, .word-nav-dot { flex-shrink: 0; }
+  .word-nav-item { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 0.95rem; letter-spacing: 0.1em; color: var(--mist); cursor: pointer; transition: all 0.4s ease; text-decoration: none; position: relative; padding-bottom: 2px; }
+  .word-nav-item:hover { color: var(--threshold); }
+  .word-nav-item.active { color: var(--deep-umber); }
+  .word-nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: var(--threshold); }
+  .word-nav-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--mist); flex-shrink: 0; }
+
+  /* ====== SCROLL PROGRESS ====== */
+  .progress-bar { position: fixed; top: 0; left: 0; height: 2px; background: linear-gradient(90deg, var(--threshold), var(--deep-threshold)); z-index: 1000; width: 0%; transition: width 0.1s linear; }
+
+  /* ====== NAV DOTS ====== */
+  .nav-dots { position: fixed; right: 2rem; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 1.2rem; }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mist); cursor: pointer; transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); position: relative; }
+  .nav-dot.active { background: var(--threshold); transform: scale(1.6); }
+  .nav-dot::after { content: attr(data-label); position: absolute; right: 1.4rem; top: 50%; transform: translateY(-50%); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--smoke); white-space: nowrap; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; font-family: 'DM Sans', sans-serif; }
+  .nav-dot:hover::after { opacity: 1; }
+
+  /* ====== SECTIONS ====== */
+  .section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 6rem 2rem; position: relative; }
+  .section-inner { max-width: 680px; width: 100%; opacity: 0; transform: translateY(40px); transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1), transform 1.2s cubic-bezier(0.23, 1, 0.32, 1); }
+  .section-inner.visible { opacity: 1; transform: translateY(0); }
+
+  /* ====== HERO ====== */
+  .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
+  .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, #e4d4d6 0%, var(--warm-white) 60%); z-index: 0; }
+  .hero-particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .particle { position: absolute; border-radius: 50%; background: var(--threshold); opacity: 0; animation: drift 12s infinite ease-in-out; }
+
+  @keyframes drift {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    20% { opacity: 0.1; }
+    50% { opacity: 0.05; transform: translate(var(--dx), var(--dy)) scale(1); }
+    80% { opacity: 0.08; }
+    100% { opacity: 0; transform: translate(var(--dx2), var(--dy2)) scale(0.3); }
+  }
+
+  .hero-content { position: relative; z-index: 2; }
+  .hero-word { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(3rem, 7vw, 6rem); color: var(--umber); letter-spacing: 0.12em; margin-bottom: 0.5rem; opacity: 0; animation: fadeUp 2s 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .hero-pronunciation { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 300; font-size: 1.1rem; color: var(--smoke); letter-spacing: 0.08em; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 2s 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards; display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
+
+  .speak-btn { background: none; border: none; cursor: pointer; padding: 0.3rem; border-radius: 50%; transition: all 0.4s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .speak-btn svg { width: 16px; height: 16px; fill: none; stroke: var(--mist); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.4s ease; }
+  .speak-btn:hover svg { stroke: var(--threshold); }
+  .speak-btn.playing svg { stroke: var(--threshold); }
+
+  .hero-line { width: 40px; height: 1px; background: var(--threshold); margin: 0 auto 2.5rem; opacity: 0; animation: fadeUp 2s 1s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .hero-subtitle { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(1.05rem, 2vw, 1.25rem); color: var(--smoke); line-height: 1.9; max-width: 520px; margin: 0 auto; opacity: 0; animation: fadeUp 2s 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .scroll-cue { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%); opacity: 0; animation: fadeUp 2s 2s cubic-bezier(0.23, 1, 0.32, 1) forwards; z-index: 2; }
+  .scroll-cue span { display: block; width: 1px; height: 40px; background: linear-gradient(to bottom, var(--threshold), transparent); margin: 0 auto; animation: pulse-line 2.5s infinite ease-in-out; }
+
+  @keyframes pulse-line { 0%, 100% { opacity: 0.3; transform: scaleY(0.6); } 50% { opacity: 0.8; transform: scaleY(1); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ====== TYPOGRAPHY ====== */
+  h2 { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); color: var(--deep-umber); margin-bottom: 2rem; line-height: 1.25; letter-spacing: 0.02em; }
+  .section-label { font-family: 'DM Sans', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--threshold); margin-bottom: 1.5rem; font-weight: 500; }
+  p { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 1.02rem; line-height: 1.85; color: var(--umber); margin-bottom: 1.4rem; }
+  p:last-child { margin-bottom: 0; }
+  .pullquote { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(1.3rem, 3vw, 1.7rem); line-height: 1.6; color: var(--deep-threshold); padding: 2rem 0; border-top: 1px solid var(--light); border-bottom: 1px solid var(--light); margin: 2.5rem 0; text-align: center; }
+
+  /* ====== DARK SECTION ====== */
+  .section-dark { background: var(--deep-umber); color: var(--cream); }
+  .section-dark h2 { color: var(--blush); }
+  .section-dark p { color: var(--mist); }
+  .section-dark .section-label { color: var(--between); }
+  .section-dark .pullquote { color: var(--between); border-color: rgba(176, 138, 142, 0.15); }
+  .section-dark .term-link { color: inherit; border-bottom-color: rgba(176, 138, 142, 0.15); }
+  .section-dark .term-link:hover { color: var(--between); border-bottom-color: rgba(176, 138, 142, 0.4); }
+
+  /* ====== WARM SECTION ====== */
+  .section-warm { background: var(--cream); }
+
+  /* ====== DUSK SECTION ====== */
+  .section-dusk { background: #2E2228; color: #e4d4d6; }
+  .section-dusk h2 { color: var(--between); }
+  .section-dusk p { color: #c4b0b4; }
+  .section-dusk .section-label { color: var(--threshold); }
+  .section-dusk .pullquote { color: var(--between); border-color: rgba(176, 138, 142, 0.15); }
+  .section-dusk .term-link { color: inherit; border-bottom-color: rgba(176, 138, 142, 0.15); }
+  .section-dusk .term-link:hover { color: var(--between); border-bottom-color: rgba(176, 138, 142, 0.4); }
+
+  /* ====== TERM LINKS ====== */
+  .term-link { color: inherit; border-bottom: 1px solid rgba(176, 138, 142, 0.12); cursor: pointer; transition: border-color 0.4s ease, color 0.4s ease; position: relative; text-decoration: none; }
+  .term-link:hover { color: var(--deep-threshold); border-bottom-color: rgba(176, 138, 142, 0.4); }
+
+  /* ====== TERM MODAL ====== */
+  .term-modal-overlay { position: fixed; inset: 0; background: rgba(26, 18, 16, 0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 500; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+  .term-modal-overlay.active { opacity: 1; pointer-events: all; }
+  .term-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); z-index: 501; background: var(--warm-white); border: 1px solid rgba(176, 138, 142, 0.15); border-radius: 3px; max-width: 480px; width: calc(100% - 3rem); padding: 2.5rem; opacity: 0; pointer-events: none; transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.23, 1, 0.32, 1); }
+  .term-modal.active { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) scale(1); }
+  .term-modal-close { position: absolute; top: 1rem; right: 1.2rem; background: none; border: none; font-size: 1.2rem; color: var(--mist); cursor: pointer; transition: color 0.3s ease; line-height: 1; }
+  .term-modal-close:hover { color: var(--umber); }
+  .term-modal-word { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 1.6rem; color: var(--deep-umber); margin-bottom: 0.3rem; letter-spacing: 0.05em; }
+  .term-modal-pron { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 0.85rem; color: var(--smoke); margin-bottom: 1.2rem; }
+  .term-modal-def { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 0.92rem; line-height: 1.8; color: var(--umber); margin-bottom: 1.2rem; }
+  .term-modal-connections { border-top: 1px solid var(--faint); padding-top: 1rem; margin-top: 0.5rem; }
+  .term-modal-connections-label { font-family: 'DM Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--threshold); margin-bottom: 0.6rem; font-weight: 500; }
+  .term-modal-connection { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; color: var(--smoke); line-height: 1.7; padding-left: 0.8rem; border-left: 1px solid var(--faint); margin-bottom: 0.5rem; }
+  .term-modal-connection em { color: var(--deep-threshold); font-style: normal; }
+
+  /* ====== FINALE ====== */
+  .finale { text-align: center; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 70%, #e4d4d6 0%, var(--warm-white) 50%); }
+  .finale h2 { font-size: clamp(2rem, 5vw, 3.2rem); margin-bottom: 1.5rem; }
+  .finale p { max-width: 520px; text-align: center; }
+  .finale-line { width: 60px; height: 1px; background: var(--threshold); margin: 2.5rem auto; }
+  .finale-small { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--smoke); margin-top: 3rem; }
+
+  /* ====== COLOPHON ====== */
+  .colophon { text-align: center; padding: 4rem 2rem; background: var(--warm-white); }
+  .colophon p { font-size: 0.75rem; color: var(--mist); letter-spacing: 0.05em; }
+  .colophon a { color: var(--threshold); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.3s ease; }
+  .colophon a:hover { border-bottom-color: var(--threshold); }
+
+  /* ====== CANVAS ====== */
+  #scent-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.3; }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 768px) { .section { padding: 4rem 1.5rem; } .nav-dots { right: 1rem; gap: 1rem; } .nav-dot::after { display: none; } .hero-word { letter-spacing: 0.08em; } .word-nav { gap: 1.2rem; padding: 1rem 1.5rem; } .word-nav-item { font-size: 0.82rem; letter-spacing: 0.06em; } }
+  @media (max-width: 480px) { .section { padding: 3rem 1.2rem; } .nav-dots { display: none; } .word-nav { gap: 0.8rem; } .word-nav-item { font-size: 0.75rem; } }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<canvas id="scent-canvas"></canvas>
+
+<!-- ====== WORD NAV ====== -->
+<nav class="word-nav" id="wordNav">
+  <a class="word-nav-item" data-word="sillage" href="/">sillage</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="apapachar" href="apapachar.html">apapachar</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ecotone" href="ecotone.html">ecotone</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="crown-shyness" href="crown-shyness.html">crown shyness</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="lacuna" href="lacuna.html">lacuna</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="centripetal" href="centripetal.html">centripetal</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="limning" href="limning.html">limning</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item active" data-word="nepantla">nepantla</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ollin" href="ollin.html">ollin</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="resonance" href="resonance.html">resonance</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="igitwenge" href="igitwenge.html">igitwenge</a>
+</nav>
+
+<!-- ====== NAV DOTS ====== -->
+<nav class="nav-dots" id="navDots">
+  <div class="nav-dot active" data-section="0" data-label="Nepantla"></div>
+  <div class="nav-dot" data-section="1" data-label="Between Worlds"></div>
+  <div class="nav-dot" data-section="2" data-label="Anzald&#250;a"></div>
+  <div class="nav-dot" data-section="3" data-label="Ecotone"></div>
+</nav>
+
+<!-- ====== TERM MODAL ====== -->
+<div class="term-modal-overlay" id="termOverlay"></div>
+<div class="term-modal" id="termModal">
+  <button class="term-modal-close" id="termClose">&times;</button>
+  <div class="term-modal-word" id="termWord"></div>
+  <div class="term-modal-pron" id="termPron"></div>
+  <div class="term-modal-def" id="termDef"></div>
+  <div class="term-modal-connections" id="termConnections">
+    <div class="term-modal-connections-label">Resonances</div>
+    <div id="termConnectionsList"></div>
+  </div>
+</div>
+
+
+<!-- ======== HERO ======== -->
+<section class="hero section" data-index="0">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-content">
+    <div class="hero-word">nepantla</div>
+    <div class="hero-pronunciation">
+      /ne&#712;pant&#620;a/ &#8212; Nahuatl, noun
+      <button class="speak-btn" id="speakBtn" aria-label="Hear pronunciation">
+        <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </button>
+    </div>
+    <div class="hero-line"></div>
+    <div class="hero-subtitle">
+      The space between two worlds.<br>
+      A liminal in-betweenness.<br>
+      Fully neither, richly both.
+    </div>
+  </div>
+  <div class="scroll-cue"><span></span></div>
+</section>
+
+
+<!-- ======== I. BETWEEN WORLDS ======== -->
+<section class="section" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">I</div>
+    <h2>The land in the middle</h2>
+    <p>In classical Nahuatl, <em>nepantla</em> means simply "in the middle" — the space between two things. It described a physical location: the land between two territories, the ground between two rivers, the moment between two seasons. A place that belonged to neither side and drew from both.</p>
+
+    <p>The Aztecs understood something that most languages struggle to articulate: that the space between isn't empty. It isn't a gap to be crossed as quickly as possible. It's a territory of its own, with its own qualities, its own richness, its own way of being inhabited.</p>
+
+    <div class="pullquote">
+      Not a passage to hurry through<br>
+      but a place to stand in<br>
+      and look in both directions.
+    </div>
+
+    <p>Before the Spanish conquest, nepantla described the geographical and the experiential. The same word for the valley between two mountains also named the feeling of existing at an intersection — being present to two realities simultaneously, without needing to resolve them into one.</p>
+  </div>
+</section>
+
+
+<!-- ======== II. ANZALDÚA ======== -->
+<section class="section section-dusk" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">II</div>
+    <h2>Anzald&uacute;a's territory</h2>
+    <p>In the twentieth century, the Chicana writer and philosopher <span class="term-link" data-term="anzaldua">Gloria Anzald&uacute;a</span> reclaimed nepantla as a framework for cultural border-living — the experience of existing at the intersection of languages, races, sexualities, and worlds, fully neither, richly both. She called the people who inhabit these spaces <em>nepantleras</em>: bridge-makers who stand not on either shore but in the river itself, feeling the current of both directions.</p>
+  </div>
+</section>
+
+
+<!-- ======== III. CLOSING ======== -->
+<section class="finale section" data-index="3">
+  <div class="section-inner" style="display: flex; flex-direction: column; align-items: center;">
+    <p>Every <span class="term-link" data-term="ecotone">ecotone</span> in nature is more biodiverse than the biomes it separates. Nepantla is the human word for that same truth — the boundary is the richest place.</p>
+
+    <div class="finale-line"></div>
+
+    <div class="finale-small">digitalsillage.com</div>
+  </div>
+</section>
+
+<footer class="colophon">
+  <p style="font-size: 0.65rem; color: var(--mist); letter-spacing: 0.12em; margin-bottom: 0.8rem;">muse bear inspired</p>
+  <p><a href="https://room527.com" target="_blank">Room 527</a> · 2026</p>
+</footer>
+
+
+<script>
+// ====== TERM DEFINITIONS ======
+const terms = {
+  'anzaldua': {
+    word: 'Gloria Anzald\u00faa',
+    pron: '1942\u20132004 \u2014 Chicana writer, philosopher',
+    def: 'Author of Borderlands/La Frontera: The New Mestiza. She reclaimed nepantla as a concept for cultural border-living \u2014 the experience of existing at the intersection of identities, languages, and worlds. She named the people who inhabit these spaces nepantleras: bridge-makers who stand not on either shore, but in the river itself.',
+    connections: [
+      { label: 'Nepantla \u00a7 II', text: 'Not a doorway but a room \u2014 the in-between as permanent dwelling place' },
+      { label: 'Apapachar', text: 'Nahuatl\u2019s extraordinary richness for untranslatable experience' }
+    ]
+  },
+  'apapachar': {
+    word: 'apapachar',
+    pron: '/ah\u02c8pah\u02c8pah\u02c8char/ \u2014 Nahuatl',
+    def: 'To embrace with the soul. To caress not just the body but the emotional state of another. From papatzoa \u2014 to soften, to press gently. Like nepantla, it names something that English requires a paragraph to describe: care that reaches beyond the surface of contact.',
+    connections: [
+      { label: 'Nepantla \u00a7 I', text: 'Nahuatl\u2019s extraordinary richness for the space between' },
+      { label: 'Ollin', text: 'Three Nahuatl words that reveal what English overlooks' }
+    ]
+  },
+  'ecotone': {
+    word: 'ecotone',
+    pron: '/\u02c8i\u02d0k\u0259\u02ccto\u028an/ \u2014 from Greek oikos + tonos',
+    def: 'The transition zone between two adjacent biomes. The place where biodiversity is highest. Nepantla is the human experience of what ecotone describes in nature: the generative richness of existing at the boundary between two worlds.',
+    connections: [
+      { label: 'Nepantla \u00a7 III', text: 'The boundary is the richest place' },
+      { label: 'Crown Shyness', text: 'The gap between canopies as living ecotone' }
+    ]
+  },
+  'ollin': {
+    word: 'ollin',
+    pron: '/\u02c8ol\u02d0in/ \u2014 Nahuatl',
+    def: 'Sacred movement. The dynamic pulse at the center of all existence. The Aztec sun stone places ollin at its very center. Movement changes at a boundary \u2014 water meets shore and reforms, reshapes, leaves traces that are purely neither.',
+    connections: [
+      { label: 'Nepantla \u00a7 I', text: 'The space between \u2014 a territory of its own' },
+      { label: 'Apapachar', text: 'Nahuatl\u2019s vocabulary for the sacred and the tender' }
+    ]
+  },
+  'sillage': {
+    word: 'sillage',
+    pron: '/si\u02d0\u02c8j\u0251\u02d0\u0292/ \u2014 French, noun',
+    def: 'The wafting trail that lingers. Your sillage is most interesting in nepantla \u2014 when you carry the scent of one world into another. Something neither world expected.',
+    connections: [
+      { label: 'Nepantla \u00a7 II', text: 'Bridge-makers carrying the current of both directions' },
+      { label: 'Limning', text: 'Tracing the edge where one world ends and another begins' }
+    ]
+  },
+  'crown-shyness': {
+    word: 'crown shyness',
+    pron: '/kra\u028an \u02c8\u0283a\u026an\u0259s/ \u2014 English, botanical phenomenon',
+    def: 'The delicate gap between neighboring tree crowns. A permanent nepantla between two living systems \u2014 the space they maintain between them is where the light enters, where new growth finds room.',
+    connections: [
+      { label: 'Nepantla \u00a7 I', text: 'The space between isn\u2019t empty \u2014 it\u2019s a territory of its own' },
+      { label: 'Ecotone', text: 'The gap as the richest habitat' }
+    ]
+  },
+  'limning': {
+    word: 'limning',
+    pron: '/\u02c8l\u026am\u026a\u014b/ \u2014 from Latin luminare',
+    def: 'To trace the outline of something, to illuminate by drawing the edge. In nepantla, you limn the edges of both worlds with equal care \u2014 the most illuminating view is the one from between.',
+    connections: [
+      { label: 'Nepantla \u00a7 II', text: 'Anzald\u00faa\u2019s border-living \u2014 tracing edges from the space between' },
+      { label: 'Crown Shyness', text: 'The dance of limning the whole surface boundary' }
+    ]
+  }
+};
+
+// ====== TERM MODAL LOGIC ======
+const overlay = document.getElementById('termOverlay');
+const modal = document.getElementById('termModal');
+const termWord = document.getElementById('termWord');
+const termPron = document.getElementById('termPron');
+const termDef = document.getElementById('termDef');
+const termConnectionsList = document.getElementById('termConnectionsList');
+const termConnections = document.getElementById('termConnections');
+
+function openTerm(key) {
+  const t = terms[key];
+  if (!t) return;
+  termWord.textContent = t.word;
+  termPron.textContent = t.pron;
+  termPron.style.display = t.pron ? 'block' : 'none';
+  termDef.textContent = t.def;
+  termConnectionsList.innerHTML = '';
+  if (t.connections && t.connections.length) {
+    termConnections.style.display = 'block';
+    t.connections.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'term-modal-connection';
+      div.innerHTML = `<em>${c.label}</em> \u2014 ${c.text}`;
+      termConnectionsList.appendChild(div);
+    });
+  } else { termConnections.style.display = 'none'; }
+  overlay.classList.add('active');
+  modal.classList.add('active');
+}
+
+function closeTerm() { overlay.classList.remove('active'); modal.classList.remove('active'); }
+overlay.addEventListener('click', closeTerm);
+document.getElementById('termClose').addEventListener('click', closeTerm);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTerm(); });
+document.querySelectorAll('.term-link').forEach(el => { el.addEventListener('click', (e) => { e.preventDefault(); openTerm(el.dataset.term); }); });
+
+// ====== SCROLL PROGRESS ======
+const progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', () => { const scrollTop = window.scrollY; const docHeight = document.documentElement.scrollHeight - window.innerHeight; progressBar.style.width = (scrollTop / docHeight * 100) + '%'; });
+
+// ====== WORD NAV ======
+const wordNav = document.getElementById('wordNav');
+window.addEventListener('scroll', () => { if (window.scrollY > window.innerHeight * 0.6) { wordNav.classList.add('visible'); } else { wordNav.classList.remove('visible'); } });
+
+// ====== SECTION REVEAL ======
+const revealObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); }); }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+document.querySelectorAll('.section-inner').forEach(el => revealObserver.observe(el));
+
+// ====== NAV DOTS ======
+const sections = document.querySelectorAll('.section');
+const dots = document.querySelectorAll('.nav-dot');
+const sectionObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { const index = entry.target.dataset.index; dots.forEach(d => d.classList.remove('active')); dots[index]?.classList.add('active'); } }); }, { threshold: 0.4 });
+sections.forEach(s => sectionObserver.observe(s));
+dots.forEach(dot => { dot.addEventListener('click', () => { const idx = dot.dataset.section; sections[idx]?.scrollIntoView({ behavior: 'smooth' }); }); });
+
+// ====== HERO PARTICLES ======
+const particleContainer = document.getElementById('heroParticles');
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = 3 + Math.random() * 8;
+  p.style.width = size + 'px'; p.style.height = size + 'px';
+  p.style.left = (10 + Math.random() * 80) + '%'; p.style.top = (10 + Math.random() * 80) + '%';
+  p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px'); p.style.setProperty('--dy', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dx2', (Math.random() * 120 - 60) + 'px'); p.style.setProperty('--dy2', (Math.random() * 120 - 60) + 'px');
+  p.style.animationDelay = (Math.random() * 10) + 's'; p.style.animationDuration = (8 + Math.random() * 8) + 's';
+  particleContainer.appendChild(p);
+}
+
+// ====== AMBIENT CANVAS ======
+const canvas = document.getElementById('scent-canvas');
+const ctx = canvas.getContext('2d');
+let w, h; let trails = [];
+function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+
+class Trail {
+  constructor() { this.reset(); }
+  reset() { this.x = Math.random() * w; this.y = Math.random() * h; this.vx = (Math.random() - 0.5) * 0.25; this.vy = (Math.random() - 0.5) * 0.25; this.life = 0; this.maxLife = 400 + Math.random() * 400; this.radius = 80 + Math.random() * 120; }
+  update() { this.x += this.vx; this.y += this.vy; this.life++; if (this.life > this.maxLife) this.reset(); }
+  draw() { const progress = this.life / this.maxLife; const alpha = Math.sin(progress * Math.PI) * 0.02; const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius); gradient.addColorStop(0, `rgba(176, 138, 142, ${alpha})`); gradient.addColorStop(1, 'rgba(176, 138, 142, 0)'); ctx.fillStyle = gradient; ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2); }
+}
+
+for (let i = 0; i < 5; i++) { const t = new Trail(); t.life = Math.random() * t.maxLife; trails.push(t); }
+function animate() { ctx.clearRect(0, 0, w, h); trails.forEach(t => { t.update(); t.draw(); }); requestAnimationFrame(animate); }
+animate();
+
+// ====== PRONUNCIATION BUTTON ======
+document.getElementById('speakBtn').addEventListener('click', function() {
+  const btn = this;
+  btn.classList.add('playing');
+  var audio = new Audio('audio/nepantla.mp3');
+  audio.addEventListener('canplaythrough', function() { audio.play(); });
+  audio.addEventListener('ended', function() { btn.classList.remove('playing'); });
+  audio.addEventListener('error', function() {
+    const utterance = new SpeechSynthesisUtterance('nepantla');
+    utterance.lang = 'es-MX';
+    utterance.rate = 0.7;
+    utterance.pitch = 1;
+    utterance.onend = () => btn.classList.remove('playing');
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  });
+});
+
+// Auto-scroll active word into view in nav
+var _navRef = document.getElementById('wordNav');
+var activeWord = _navRef && _navRef.querySelector('.word-nav-item.active');
+if (activeWord) {
+  setTimeout(function() {
+    activeWord.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, 100);
+}
+</script>
+
+<script>
+window.pageTranslations = {
+  es: {
+    heroSubtitle: 'El espacio entre dos mundos.<br>Una liminalidad intermedia.<br>Plenamente ninguno, ricamente ambos.',
+    sections: {
+      '1': {
+        h: 'La tierra de en medio',
+        p: [
+          'En náhuatl clásico, <em>nepantla</em> significa simplemente "en el medio" — el espacio entre dos cosas. Describía un lugar físico: la tierra entre dos territorios, el suelo entre dos ríos, el momento entre dos estaciones. Un lugar que no pertenecía a ningún lado y se nutría de ambos.',
+          'Los aztecas comprendían algo que la mayoría de los idiomas luchan por articular: que el espacio intermedio no está vacío. No es una brecha que cruzar lo más rápido posible. Es un territorio propio, con sus propias cualidades, su propia riqueza, su propia forma de ser habitado.',
+          'Antes de la conquista española, nepantla describía lo geográfico y lo experiencial. La misma palabra para el valle entre dos montañas también nombraba la sensación de existir en una intersección — estar presente ante dos realidades simultáneamente, sin necesidad de resolverlas en una sola.'
+        ],
+        q: 'No un pasaje para apresurarse<br>sino un lugar donde pararse<br>y mirar en ambas direcciones.'
+      },
+      '2': {
+        h: 'El territorio de Anzaldúa',
+        p: [
+          'En el siglo XX, la escritora y filósofa chicana <span class="term-link" data-term="anzaldua">Gloria Anzaldúa</span> reclamó nepantla como marco para la vida en la frontera cultural — la experiencia de existir en la intersección de lenguas, razas, sexualidades y mundos, plenamente ninguna, ricamente ambas. Llamó a las personas que habitan estos espacios <em>nepantleras</em>: constructoras de puentes que no están en ninguna orilla sino en el río mismo, sintiendo la corriente de ambas direcciones.'
+        ],
+        q: null
+      },
+      '3': {
+        h: null,
+        p: [
+          'Cada <span class="term-link" data-term="ecotone">ecotonía</span> en la naturaleza tiene más biodiversidad que los biomas que separa. Nepantla es la palabra humana para esa misma verdad — el límite es el lugar más rico.'
+        ],
+        q: null
+      }
+    }
+  },
+  rw: {
+    heroSubtitle: 'Umwanya uri hagati y\'ibihe bibiri.<br>Uburyo bwo kuba hagati.<br>Ntabwo uri bumwe rwose, ariko uri byombi by\'agaciro.',
+    sections: {
+      '1': {
+        h: 'Igihugu cyo hagati',
+        p: [
+          'Mu rurimi rwa Nahuatl rwa kera, <em>nepantla</em> bisobanura gusa "hagati" — umwanya uri hagati y\'ibintu bibiri. Byasobanuraga ahantu nyakuri: igihugu kiri hagati y\'uturere tubiri, ubutaka buri hagati y\'inzuzi ebyiri, akanya kari hagati y\'ibihe bibiri. Ahantu hatari ah\'uruhande urwo ari rwo rwose ariko hakurwa ku mpande zombi.',
+          'Abanyazteki bumvaga ikintu indimi nyinshi zidashobora kuvuga: ko umwanya uri hagati utari ubusa. Si urwobo rwo kunyuramo vuba bishoboka. Ni uturere twarwo, dufite imico yarwo, ubutunzi bwarwo, uburyo bwarwo bwo kubamo.',
+          'Mbere y\'intsinzi y\'Abanyesipanye, nepantla yasobanuraga iby\'aho hantu n\'iby\'ubunararibonye. Ijambo rimwe ry\'ikibaya kiri hagati y\'imisozi ibiri na ryo ryitaga kumva ko uri mu mahuriro — kuba uri imbere y\'ibihe bibiri icyarimwe, utabikeneye guhuriza mu kimwe.'
+        ],
+        q: 'Si inzira yo kunyuramo vuba<br>ahubwo ni ahantu ho guhagarara<br>ukareba impande zombi.'
+      },
+      '2': {
+        h: 'Uturere twa Anzaldua',
+        p: [
+          'Mu kinyejana cya makumyabiri, umwanditsi w\'Umuchikana n\'umufilozofe <span class="term-link" data-term="anzaldua">Gloria Anzaldua</span> yasubiye nepantla nk\'inzira yo gusobanukirwa ubuzima ku mupaka w\'umuco — ubunararibonye bwo kuba mu mahuriro y\'indimi, amoko, uburinganya n\'ibihe, ntabwo uri bumwe rwose, ariko uri byombi by\'agaciro. Yise abantu baho <em>nepantleras</em> — abubatsi b\'ibiraro badahagazwe n\'inkombe iyo ari yo yose ahubwo bari mu ruzi ubwarwo, bumva umuyoboro w\'impande zombi.'
+        ],
+        q: null
+      },
+      '3': {
+        h: null,
+        p: [
+          'Buri <span class="term-link" data-term="ecotone">ecotone</span> mu bidukikije ifite urusobe rw\'ubuzima ruruta ibice bisanzwe yitandukanya. Nepantla ni ijambo ry\'abantu ry\'ukuri kumwe — umupaka ni ahantu h\'ubukire bwinshi.'
+        ],
+        q: null
+      }
+    }
+  }
+};
+</script>
+<script src="i18n.js"></script>
+
+</body>
+</html>

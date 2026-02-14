@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Igitwenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFBF7;
+    --amber: #C4956A;
+    --deep-amber: #A67744;
+    --umber: #3D2B1F;
+    --deep-umber: #2A1D14;
+    --smoke: #8B7D6B;
+    --mist: #D4C9B8;
+    --blush: #E8D5C4;
+    --ink: #1A1210;
+    --faint: rgba(212, 137, 74, 0.08);
+    /* igitwenge — sunset, mango, the warmth of laughter */
+    --joy: #D4894A;
+    --deep-joy: #A86A2A;
+    --radiance: #E8B07A;
+    --light: rgba(212, 137, 74, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: var(--mist) transparent; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--warm-white); color: var(--umber); overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+  .word-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; align-items: center; gap: 2.5rem; padding: 1.2rem 2rem; background: rgba(253, 251, 247, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(212, 137, 74, 0.08); transform: translateY(-100%); transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+  .word-nav.visible { transform: translateY(0); }
+  .word-nav::-webkit-scrollbar { display: none; }
+  .word-nav-item, .word-nav-dot { flex-shrink: 0; }
+  .word-nav-item { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 0.95rem; letter-spacing: 0.1em; color: var(--mist); cursor: pointer; transition: all 0.4s ease; text-decoration: none; position: relative; padding-bottom: 2px; }
+  .word-nav-item:hover { color: var(--joy); }
+  .word-nav-item.active { color: var(--deep-umber); }
+  .word-nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: var(--joy); }
+  .word-nav-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--mist); flex-shrink: 0; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 2px; background: linear-gradient(90deg, var(--joy), var(--deep-joy)); z-index: 1000; width: 0%; transition: width 0.1s linear; }
+
+  .nav-dots { position: fixed; right: 2rem; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 1.2rem; }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mist); cursor: pointer; transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); position: relative; }
+  .nav-dot.active { background: var(--joy); transform: scale(1.6); }
+  .nav-dot::after { content: attr(data-label); position: absolute; right: 1.4rem; top: 50%; transform: translateY(-50%); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--smoke); white-space: nowrap; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; font-family: 'DM Sans', sans-serif; }
+  .nav-dot:hover::after { opacity: 1; }
+
+  .section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 6rem 2rem; position: relative; }
+  .section-inner { max-width: 680px; width: 100%; opacity: 0; transform: translateY(40px); transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1), transform 1.2s cubic-bezier(0.23, 1, 0.32, 1); }
+  .section-inner.visible { opacity: 1; transform: translateY(0); }
+
+  .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
+  .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, #eddcc8 0%, var(--warm-white) 60%); z-index: 0; }
+  .hero-particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .particle { position: absolute; border-radius: 50%; background: var(--joy); opacity: 0; animation: drift 12s infinite ease-in-out; }
+
+  @keyframes drift {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    20% { opacity: 0.1; }
+    50% { opacity: 0.05; transform: translate(var(--dx), var(--dy)) scale(1); }
+    80% { opacity: 0.08; }
+    100% { opacity: 0; transform: translate(var(--dx2), var(--dy2)) scale(0.3); }
+  }
+
+  .hero-content { position: relative; z-index: 2; }
+  .hero-word { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(3rem, 7vw, 6rem); color: var(--umber); letter-spacing: 0.12em; margin-bottom: 0.5rem; opacity: 0; animation: fadeUp 2s 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .hero-pronunciation { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 300; font-size: 1.1rem; color: var(--smoke); letter-spacing: 0.08em; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 2s 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards; display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
+
+  .speak-btn { background: none; border: none; cursor: pointer; padding: 0.3rem; border-radius: 50%; transition: all 0.4s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .speak-btn svg { width: 16px; height: 16px; fill: none; stroke: var(--mist); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.4s ease; }
+  .speak-btn:hover svg { stroke: var(--joy); }
+  .speak-btn.playing svg { stroke: var(--joy); }
+
+  .hero-line { width: 40px; height: 1px; background: var(--joy); margin: 0 auto 2.5rem; opacity: 0; animation: fadeUp 2s 1s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .hero-subtitle { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(1.05rem, 2vw, 1.25rem); color: var(--smoke); line-height: 1.9; max-width: 520px; margin: 0 auto; opacity: 0; animation: fadeUp 2s 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .scroll-cue { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%); opacity: 0; animation: fadeUp 2s 2s cubic-bezier(0.23, 1, 0.32, 1) forwards; z-index: 2; }
+  .scroll-cue span { display: block; width: 1px; height: 40px; background: linear-gradient(to bottom, var(--joy), transparent); margin: 0 auto; animation: pulse-line 2.5s infinite ease-in-out; }
+
+  @keyframes pulse-line { 0%, 100% { opacity: 0.3; transform: scaleY(0.6); } 50% { opacity: 0.8; transform: scaleY(1); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
+
+  h2 { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); color: var(--deep-umber); margin-bottom: 2rem; line-height: 1.25; letter-spacing: 0.02em; }
+  .section-label { font-family: 'DM Sans', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--joy); margin-bottom: 1.5rem; font-weight: 500; }
+  p { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 1.02rem; line-height: 1.85; color: var(--umber); margin-bottom: 1.4rem; }
+  p:last-child { margin-bottom: 0; }
+  .pullquote { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(1.3rem, 3vw, 1.7rem); line-height: 1.6; color: var(--deep-joy); padding: 2rem 0; border-top: 1px solid var(--light); border-bottom: 1px solid var(--light); margin: 2.5rem 0; text-align: center; }
+
+  .section-dark { background: var(--deep-umber); color: var(--cream); }
+  .section-dark h2 { color: var(--blush); }
+  .section-dark p { color: var(--mist); }
+  .section-dark .section-label { color: var(--radiance); }
+  .section-dark .pullquote { color: var(--radiance); border-color: rgba(212, 137, 74, 0.15); }
+  .section-dark .term-link { color: inherit; border-bottom-color: rgba(212, 137, 74, 0.15); }
+  .section-dark .term-link:hover { color: var(--radiance); border-bottom-color: rgba(212, 137, 74, 0.4); }
+
+  .section-warm { background: var(--cream); }
+
+  /* ====== SUNSET SECTION ====== */
+  .section-sunset { background: #2E2218; color: #e4d4c4; }
+  .section-sunset h2 { color: var(--radiance); }
+  .section-sunset p { color: #c4aa90; }
+  .section-sunset .section-label { color: var(--joy); }
+  .section-sunset .pullquote { color: var(--radiance); border-color: rgba(212, 137, 74, 0.15); }
+  .section-sunset .term-link { color: inherit; border-bottom-color: rgba(212, 137, 74, 0.15); }
+  .section-sunset .term-link:hover { color: var(--radiance); border-bottom-color: rgba(212, 137, 74, 0.4); }
+
+  .term-link { color: inherit; border-bottom: 1px solid rgba(212, 137, 74, 0.12); cursor: pointer; transition: border-color 0.4s ease, color 0.4s ease; position: relative; text-decoration: none; }
+  .term-link:hover { color: var(--deep-joy); border-bottom-color: rgba(212, 137, 74, 0.4); }
+
+  .term-modal-overlay { position: fixed; inset: 0; background: rgba(26, 18, 16, 0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 500; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+  .term-modal-overlay.active { opacity: 1; pointer-events: all; }
+  .term-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); z-index: 501; background: var(--warm-white); border: 1px solid rgba(212, 137, 74, 0.15); border-radius: 3px; max-width: 480px; width: calc(100% - 3rem); padding: 2.5rem; opacity: 0; pointer-events: none; transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.23, 1, 0.32, 1); }
+  .term-modal.active { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) scale(1); }
+  .term-modal-close { position: absolute; top: 1rem; right: 1.2rem; background: none; border: none; font-size: 1.2rem; color: var(--mist); cursor: pointer; transition: color 0.3s ease; line-height: 1; }
+  .term-modal-close:hover { color: var(--umber); }
+  .term-modal-word { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 1.6rem; color: var(--deep-umber); margin-bottom: 0.3rem; letter-spacing: 0.05em; }
+  .term-modal-pron { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 0.85rem; color: var(--smoke); margin-bottom: 1.2rem; }
+  .term-modal-def { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 0.92rem; line-height: 1.8; color: var(--umber); margin-bottom: 1.2rem; }
+  .term-modal-connections { border-top: 1px solid var(--faint); padding-top: 1rem; margin-top: 0.5rem; }
+  .term-modal-connections-label { font-family: 'DM Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--joy); margin-bottom: 0.6rem; font-weight: 500; }
+  .term-modal-connection { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; color: var(--smoke); line-height: 1.7; padding-left: 0.8rem; border-left: 1px solid var(--faint); margin-bottom: 0.5rem; }
+  .term-modal-connection em { color: var(--deep-joy); font-style: normal; }
+
+  .finale { text-align: center; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 70%, #eddcc8 0%, var(--warm-white) 50%); }
+  .finale h2 { font-size: clamp(2rem, 5vw, 3.2rem); margin-bottom: 1.5rem; }
+  .finale p { max-width: 520px; text-align: center; }
+  .finale-line { width: 60px; height: 1px; background: var(--joy); margin: 2.5rem auto; }
+  .finale-small { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--smoke); margin-top: 3rem; }
+
+  .colophon { text-align: center; padding: 4rem 2rem; background: var(--warm-white); }
+  .colophon p { font-size: 0.75rem; color: var(--mist); letter-spacing: 0.05em; }
+  .colophon a { color: var(--joy); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.3s ease; }
+  .colophon a:hover { border-bottom-color: var(--joy); }
+
+  #scent-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.3; }
+
+  @media (max-width: 768px) { .section { padding: 4rem 1.5rem; } .nav-dots { right: 1rem; gap: 1rem; } .nav-dot::after { display: none; } .hero-word { letter-spacing: 0.08em; } .word-nav { gap: 1.2rem; padding: 1rem 1.5rem; } .word-nav-item { font-size: 0.82rem; letter-spacing: 0.06em; } }
+  @media (max-width: 480px) { .section { padding: 3rem 1.2rem; } .nav-dots { display: none; } .word-nav { gap: 0.8rem; } .word-nav-item { font-size: 0.75rem; } }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<canvas id="scent-canvas"></canvas>
+
+<nav class="word-nav" id="wordNav">
+  <a class="word-nav-item" data-word="sillage" href="/">sillage</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="apapachar" href="apapachar.html">apapachar</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ecotone" href="ecotone.html">ecotone</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="crown-shyness" href="crown-shyness.html">crown shyness</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="lacuna" href="lacuna.html">lacuna</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="centripetal" href="centripetal.html">centripetal</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="limning" href="limning.html">limning</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="nepantla" href="nepantla.html">nepantla</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ollin" href="ollin.html">ollin</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="resonance" href="resonance.html">resonance</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item active" data-word="igitwenge">igitwenge</a>
+</nav>
+
+<nav class="nav-dots" id="navDots">
+  <div class="nav-dot active" data-section="0" data-label="Igitwenge"></div>
+  <div class="nav-dot" data-section="1" data-label="The Whole Body"></div>
+  <div class="nav-dot" data-section="2" data-label="Resilience"></div>
+  <div class="nav-dot" data-section="3" data-label="Contagion"></div>
+  <div class="nav-dot" data-section="4" data-label="What Remains"></div>
+  <div class="nav-dot" data-section="5" data-label="The Practice"></div>
+</nav>
+
+<div class="term-modal-overlay" id="termOverlay"></div>
+<div class="term-modal" id="termModal">
+  <button class="term-modal-close" id="termClose">&times;</button>
+  <div class="term-modal-word" id="termWord"></div>
+  <div class="term-modal-pron" id="termPron"></div>
+  <div class="term-modal-def" id="termDef"></div>
+  <div class="term-modal-connections" id="termConnections">
+    <div class="term-modal-connections-label">Resonances</div>
+    <div id="termConnectionsList"></div>
+  </div>
+</div>
+
+
+<!-- ======== HERO ======== -->
+<section class="hero section" data-index="0">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-content">
+    <div class="hero-word">igitwenge</div>
+    <div class="hero-pronunciation">
+      /iɡiˈtweŋɡe/ — Kinyarwanda, noun
+      <!-- speak button hidden until recorded audio is available -->
+    </div>
+    <div class="hero-line"></div>
+    <div class="hero-subtitle">
+      More than laughter.<br>
+      A deep, genuine form of joyful expression.<br>
+      To laugh with your entire being.
+    </div>
+  </div>
+  <div class="scroll-cue"><span></span></div>
+</section>
+
+
+<!-- ======== I. THE WHOLE BODY ======== -->
+<section class="section" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">I</div>
+    <h2>The kind that takes the whole body</h2>
+    <p>There are many ways to laugh. The polite laugh, the nervous laugh, the performative laugh that signals you understood the joke. The scroll-induced exhale through the nose that barely qualifies. Most laughter in modern life is transactional — a social lubricant, a response to stimulus, a reflex that begins and ends at the surface.</p>
+
+    <p>Igitwenge is none of these. In Kinyarwanda — the language of Rwanda, a Bantu tongue spoken by twelve million people — igitwenge describes laughter that takes the whole body. Not a reaction but an eruption. The kind where your eyes close, your shoulders shake, your breath leaves you completely and you have to wait for it to come back. The kind that makes strangers turn and smile even though they don't know what's funny.</p>
+
+    <div class="pullquote">
+      Not a reaction to something funny<br>
+      but a state of being so fully present<br>
+      that joy becomes the entire instrument.
+    </div>
+
+    <p>This distinction matters. Igitwenge isn't caused by humor — it's a quality of presence. It's what happens when something touches a place deep enough that the body's only honest response is total surrender to delight. The belly, the chest, the throat, the eyes — all of it participating. Nothing held back.</p>
+  </div>
+</section>
+
+
+<!-- ======== II. JOY AS RESILIENCE ======== -->
+<section class="section section-sunset" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">II</div>
+    <h2>Joy that knows the weight of things</h2>
+    <p>Kinyarwanda belongs to the Bantu language family — a constellation of languages that share a deep structural insight: that the individual and the collective are inseparable. The concept of <span class="term-link" data-term="ubumuntu">ubumuntu</span> — <em>I am because we are</em> — runs through the language like a root system. Your humanity only exists through its connection to others. And so your joy is never only yours.</p>
+
+    <p>This is what gives igitwenge its particular depth. It's not shallow. It's not escapist. It's the laughter of people who live fully — who carry the full weight of being human and still choose to be present to delight when it arrives. Joy and sorrow are not opposites in this framework. They are <span class="term-link" data-term="ecotone">ecotones</span> of each other — each one richer for the existence of the other.</p>
+
+    <div class="pullquote">
+      The deepest laughter doesn't come<br>
+      from lightness. It comes from people<br>
+      who carry the full weight of things<br>
+      and still choose joy.
+    </div>
+
+    <p>Rwanda is a country of hills, of morning mist, of twelve million people who share a single language and a philosophy that says your being is woven into the being of everyone around you. When someone laughs with their whole body in that context, it isn't individual expression — it's a communal vibration. Everyone in the room feels it. Everyone is changed by it. That's ubumuntu in its purest audible form.</p>
+  </div>
+</section>
+
+
+<!-- ======== III. CONTAGION ======== -->
+<section class="section section-warm" data-index="3">
+  <div class="section-inner">
+    <div class="section-label">III</div>
+    <h2>The most honest contagion</h2>
+    <p>You can fake a smile. You can manufacture a chuckle. You cannot fake igitwenge. The body knows the difference between performed joy and the real thing, and so does everyone witnessing it. There is no more honest signal in all of human communication than someone laughing so hard they lose control of their own face.</p>
+
+    <p>This is why genuine laughter is contagious in a way that politeness never will be. It bypasses every filter — cultural, linguistic, social — and lands directly in the body of whoever hears it. A room full of people who don't share a single word of common language can still be united by one person's igitwenge. It's the original universal frequency.</p>
+
+    <div class="pullquote">
+      You can't fake it.<br>
+      The body knows the difference —<br>
+      and so does everyone listening.
+    </div>
+
+    <p>Think about <span class="term-link" data-term="sillage">sillage</span> — the trace you leave as you move through space. Most traces are subtle, ambient, detected only by those paying attention. But igitwenge leaves a trail that's impossible to miss. It fills a room the way a plucked string fills the body of a guitar. It's <span class="term-link" data-term="resonance">resonance</span> in its purest form — a vibration so genuine it sets others vibrating too.</p>
+
+    <p>The <span class="term-link" data-term="ollin">sacred movement</span> at the center of existence isn't always solemn. Sometimes the most sacred motion is the shaking of a body overcome by delight.</p>
+  </div>
+</section>
+
+
+<!-- ======== IV. WHAT REMAINS ======== -->
+<section class="section section-dark" data-index="4">
+  <div class="section-inner">
+    <div class="section-label">IV</div>
+    <h2>The afterglow of shared laughter</h2>
+    <p>There's a specific quality to the silence after genuine laughter. Not empty silence — full silence. The kind where everyone in the room is still feeling it, still warm from it, still connected by the thing that just passed through all of them simultaneously. That afterglow is its own kind of <span class="term-link" data-term="sillage">sillage</span> — the lingering trace of joy in a space.</p>
+
+    <p>You remember these moments with extraordinary clarity. Not what was said — often you can't even reconstruct the joke or the trigger. What you remember is the <em>feeling</em>. The warmth in the chest. The ache in the stomach muscles. The tears. The way someone across the room caught your eye and that made it worse, and better, simultaneously.</p>
+
+    <div class="pullquote">
+      The silence after genuine laughter<br>
+      isn't empty — it's full.<br>
+      Everyone still warm from what<br>
+      just passed through them.
+    </div>
+
+    <p>This is what the collection of words on this site keeps circling: the things that live in <span class="term-link" data-term="lacuna">the spaces between</span>. The trace after the movement. The gap where light enters. The <span class="term-link" data-term="nepantla">in-between</span> that turns out to be the richest place. Igitwenge adds something the other words don't have — the reminder that these spaces aren't only contemplative. Sometimes they're hilarious. Sometimes the most profound thing your body can do is lose itself completely in joy.</p>
+
+    <p><span class="term-link" data-term="apapachar">To embrace with the soul</span> sometimes looks like holding someone while they cry. And sometimes it looks like laughing so hard together that you can barely breathe. Both are acts of total presence. Both require surrendering the performance of composure.</p>
+  </div>
+</section>
+
+
+<!-- ======== V. THE PRACTICE ======== -->
+<section class="finale section" data-index="5">
+  <div class="section-inner" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="section-label">V</div>
+    <h2>Choose the frequency</h2>
+    <p>Joy is not a reward for the fortunate. It's a practice — a deliberate tuning to the frequency that says <em>yes, I'm here, I'm alive, and something in this moment is worth my full attention</em>. Igitwenge is what happens when that practice reaches critical mass. When the <span class="term-link" data-term="limning">edges you've been tracing</span> with such careful attention suddenly reveal something so surprising, so perfectly imperfect, that the only response is to let the whole body answer.</p>
+
+    <p>It's not about being happy all the time. It's about being available to happiness when it arrives — being a body shaped to <span class="term-link" data-term="resonance">resonate</span> with it rather than deflect it.</p>
+
+    <div class="finale-line"></div>
+
+    <p>Laugh with your whole body. Let the sound fill the room. Leave the warmth of it everywhere you go.</p>
+
+    <p style="margin-top: 1.5rem; font-style: italic; font-family: 'Cormorant Garamond', serif; color: var(--smoke); font-size: 0.95rem;">The deepest joy is not performed.<br>It erupts — fully, honestly, without permission.<br>And everyone who hears it is changed.</p>
+
+    <div class="finale-small">digitalsillage.com</div>
+  </div>
+</section>
+
+<footer class="colophon">
+  <p style="font-size: 0.65rem; color: var(--mist); letter-spacing: 0.12em; margin-bottom: 0.8rem;">muse bear inspired</p>
+  <p><a href="https://room527.com" target="_blank">Room 527</a> · 2026</p>
+</footer>
+
+
+<script>
+const terms = {
+  'sillage': {
+    word: 'sillage',
+    pron: '/si\u02d0\u02c8j\u0251\u02d0\u0292/ \u2014 French, noun',
+    def: 'The wafting trail that lingers as you pass through. Igitwenge leaves a sillage that\u2019s impossible to miss \u2014 the warmth of shared laughter filling a room and lingering long after the sound fades. The most joyful trace.',
+    connections: [
+      { label: 'Igitwenge \u00a7 III', text: 'A trail that\u2019s impossible to miss \u2014 it fills the room' },
+      { label: 'Igitwenge \u00a7 IV', text: 'The afterglow of shared laughter as sillage' }
+    ]
+  },
+  'resonance': {
+    word: 'resonance',
+    pron: '/\u02c8r\u025bz\u0259n\u0259ns/ \u2014 from Latin resonare',
+    def: 'The sustained vibration that persists when intention meets action. Igitwenge is resonance in its purest form \u2014 a vibration so genuine it sets others vibrating too. The body as resonating instrument, amplifying joy.',
+    connections: [
+      { label: 'Igitwenge \u00a7 III', text: 'Resonance in its purest form \u2014 setting others vibrating' },
+      { label: 'Resonance \u00a7 I', text: 'The body amplifies what intention initiates' }
+    ]
+  },
+  'ecotone': {
+    word: 'ecotone',
+    pron: '/\u02c8i\u02d0k\u0259\u02ccto\u028an/ \u2014 from Greek oikos + tonos',
+    def: 'The tension between two homes. Joy and grief are ecotones of each other \u2014 the deepest laughter doesn\u2019t come from those who haven\u2019t suffered, but from those who have and choose to be fully alive anyway.',
+    connections: [
+      { label: 'Igitwenge \u00a7 II', text: 'Joy and grief as ecotones of each other' },
+      { label: 'Ecotone', text: 'The boundary as the richest, most alive zone' }
+    ]
+  },
+  'ubumuntu': {
+    word: 'ubumuntu',
+    pron: '/ubu\u02c8muntu/ \u2014 Kinyarwanda',
+    def: 'Being human. The Rwandan expression of ubuntu \u2014 I am because we are. Your humanity exists through its connection to others. When you laugh with your whole body, you vibrate at a frequency everyone around you can feel. Your joy is never only yours.',
+    connections: [
+      { label: 'Igitwenge \u00a7 II', text: 'Your joy is never only yours' },
+      { label: 'Apapachar', text: 'Care as the connective tissue of shared humanity' }
+    ]
+  },
+  'ollin': {
+    word: 'ollin',
+    pron: '/\u02c8ol\u02d0in/ \u2014 Nahuatl',
+    def: 'Sacred movement. The dynamic pulse at the center of all existence. Sometimes the most sacred motion is the shaking of a body overcome by delight. Ollin doesn\u2019t always look solemn.',
+    connections: [
+      { label: 'Igitwenge \u00a7 III', text: 'The most sacred motion \u2014 a body overcome by delight' },
+      { label: 'Ollin', text: 'Nothing that deserves to be noticed holds still' }
+    ]
+  },
+  'apapachar': {
+    word: 'apapachar',
+    pron: '/ah\u02c8pah\u02c8pah\u02c8char/ \u2014 Nahuatl',
+    def: 'To embrace with the soul. Sometimes that looks like holding someone while they cry. And sometimes it looks like laughing so hard together you can barely breathe. Both are acts of total presence.',
+    connections: [
+      { label: 'Igitwenge \u00a7 IV', text: 'Both crying and laughing as acts of total presence' },
+      { label: 'Apapachar', text: 'Care that reaches beyond the surface of contact' }
+    ]
+  },
+  'lacuna': {
+    word: 'lacuna',
+    pron: '/l\u0259\u02c8kju\u02d0n\u0259/ \u2014 Latin, noun',
+    def: 'A gap, an absence, a missing piece. The spaces between things are often the richest places. Igitwenge adds a dimension: sometimes those spaces aren\u2019t contemplative \u2014 sometimes they\u2019re hilarious.',
+    connections: [
+      { label: 'Igitwenge \u00a7 IV', text: 'The reminder that in-between spaces aren\u2019t only contemplative' },
+      { label: 'Lacuna', text: 'The shape of what\u2019s missing reveals the whole' }
+    ]
+  },
+  'nepantla': {
+    word: 'nepantla',
+    pron: '/ne\u02c8pantla/ \u2014 Nahuatl',
+    def: 'The space between two worlds. A liminal in-betweenness. The richest place. Like the silence after shared laughter \u2014 the in-between that turns out to hold the most.',
+    connections: [
+      { label: 'Igitwenge \u00a7 IV', text: 'The in-between as the richest place' },
+      { label: 'Nepantla', text: 'Fully neither, richly both' }
+    ]
+  },
+  'limning': {
+    word: 'limning',
+    pron: '/\u02c8l\u026am\u026a\u014b/ \u2014 from Latin luminare',
+    def: 'To trace the outline, to illuminate the edge. Careful attention to boundaries can reveal something so surprising that the only response is to let the whole body answer with laughter.',
+    connections: [
+      { label: 'Igitwenge \u00a7 V', text: 'Edges revealing something so perfectly imperfect' },
+      { label: 'Limning', text: 'The finest resolution at the boundary illuminates everything' }
+    ]
+  }
+};
+
+const overlay = document.getElementById('termOverlay');
+const modal = document.getElementById('termModal');
+const termWord = document.getElementById('termWord');
+const termPron = document.getElementById('termPron');
+const termDef = document.getElementById('termDef');
+const termConnectionsList = document.getElementById('termConnectionsList');
+const termConnections = document.getElementById('termConnections');
+
+function openTerm(key) {
+  const t = terms[key]; if (!t) return;
+  termWord.textContent = t.word; termPron.textContent = t.pron;
+  termPron.style.display = t.pron ? 'block' : 'none';
+  termDef.textContent = t.def; termConnectionsList.innerHTML = '';
+  if (t.connections && t.connections.length) {
+    termConnections.style.display = 'block';
+    t.connections.forEach(c => { const div = document.createElement('div'); div.className = 'term-modal-connection'; div.innerHTML = `<em>${c.label}</em> \u2014 ${c.text}`; termConnectionsList.appendChild(div); });
+  } else { termConnections.style.display = 'none'; }
+  overlay.classList.add('active'); modal.classList.add('active');
+}
+function closeTerm() { overlay.classList.remove('active'); modal.classList.remove('active'); }
+overlay.addEventListener('click', closeTerm);
+document.getElementById('termClose').addEventListener('click', closeTerm);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTerm(); });
+document.querySelectorAll('.term-link').forEach(el => { el.addEventListener('click', (e) => { e.preventDefault(); openTerm(el.dataset.term); }); });
+
+const progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', () => { const scrollTop = window.scrollY; const docHeight = document.documentElement.scrollHeight - window.innerHeight; progressBar.style.width = (scrollTop / docHeight * 100) + '%'; });
+
+const wordNav = document.getElementById('wordNav');
+window.addEventListener('scroll', () => { if (window.scrollY > window.innerHeight * 0.6) { wordNav.classList.add('visible'); } else { wordNav.classList.remove('visible'); } });
+
+const revealObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); }); }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+document.querySelectorAll('.section-inner').forEach(el => revealObserver.observe(el));
+
+const sections = document.querySelectorAll('.section');
+const dots = document.querySelectorAll('.nav-dot');
+const sectionObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { const index = entry.target.dataset.index; dots.forEach(d => d.classList.remove('active')); dots[index]?.classList.add('active'); } }); }, { threshold: 0.4 });
+sections.forEach(s => sectionObserver.observe(s));
+dots.forEach(dot => { dot.addEventListener('click', () => { const idx = dot.dataset.section; sections[idx]?.scrollIntoView({ behavior: 'smooth' }); }); });
+
+const particleContainer = document.getElementById('heroParticles');
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div'); p.className = 'particle';
+  const size = 3 + Math.random() * 8;
+  p.style.width = size + 'px'; p.style.height = size + 'px';
+  p.style.left = (10 + Math.random() * 80) + '%'; p.style.top = (10 + Math.random() * 80) + '%';
+  p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px'); p.style.setProperty('--dy', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dx2', (Math.random() * 120 - 60) + 'px'); p.style.setProperty('--dy2', (Math.random() * 120 - 60) + 'px');
+  p.style.animationDelay = (Math.random() * 10) + 's'; p.style.animationDuration = (8 + Math.random() * 8) + 's';
+  particleContainer.appendChild(p);
+}
+
+const canvas = document.getElementById('scent-canvas');
+const ctx = canvas.getContext('2d');
+let w, h; let trails = [];
+function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+class Trail {
+  constructor() { this.reset(); }
+  reset() { this.x = Math.random() * w; this.y = Math.random() * h; this.vx = (Math.random() - 0.5) * 0.25; this.vy = (Math.random() - 0.5) * 0.25; this.life = 0; this.maxLife = 400 + Math.random() * 400; this.radius = 80 + Math.random() * 120; }
+  update() { this.x += this.vx; this.y += this.vy; this.life++; if (this.life > this.maxLife) this.reset(); }
+  draw() { const progress = this.life / this.maxLife; const alpha = Math.sin(progress * Math.PI) * 0.02; const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius); gradient.addColorStop(0, `rgba(212, 137, 74, ${alpha})`); gradient.addColorStop(1, 'rgba(212, 137, 74, 0)'); ctx.fillStyle = gradient; ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2); }
+}
+for (let i = 0; i < 5; i++) { const t = new Trail(); t.life = Math.random() * t.maxLife; trails.push(t); }
+function animate() { ctx.clearRect(0, 0, w, h); trails.forEach(t => { t.update(); t.draw(); }); requestAnimationFrame(animate); }
+animate();
+
+// Pronunciation disabled until recorded audio is available
+// wordConfig preserved for when audio file is added:
+// { word: 'igitwenge', phonetic: 'ee gee TWEH ng eh', voiceHint: 'en', rate: 0.55, hasRecordedAudio: true }
+
+// Auto-scroll active word into view in nav
+var _navRef = document.getElementById('wordNav');
+var activeWord = _navRef && _navRef.querySelector('.word-nav-item.active');
+if (activeWord) {
+  setTimeout(function() {
+    activeWord.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, 100);
+}
+</script>
+
+<script>
+window.pageTranslations = {
+  es: {
+    heroSubtitle: 'Más que risa.<br>Una forma profunda y genuina de expresión gozosa.<br>Reír con todo el ser.',
+    sections: {
+      '1': {
+        h: 'De las que toman el cuerpo entero',
+        p: [
+          'Hay muchas formas de reír. La risa cortés, la risa nerviosa, la risa performativa que señala que entendiste el chiste. La exhalación por la nariz provocada por el scroll que apenas califica. La mayoría de la risa en la vida moderna es transaccional — un lubricante social, una respuesta al estímulo, un reflejo que comienza y termina en la superficie.',
+          'Igitwenge no es nada de esto. En kinyarwanda — el idioma de Ruanda, una lengua bantú hablada por doce millones de personas — igitwenge describe la risa que toma el cuerpo entero. No una reacción sino una erupción. De las que te cierran los ojos, te sacuden los hombros, te vacían completamente el aliento y tienes que esperar a que vuelva. De las que hacen que los desconocidos se volteen y sonrían aunque no sepan qué es lo gracioso.',
+          'Esta distinción importa. Igitwenge no es causado por el humor — es una cualidad de presencia. Es lo que pasa cuando algo toca un lugar tan profundo que la única respuesta honesta del cuerpo es la rendición total al deleite. El vientre, el pecho, la garganta, los ojos — todo participando. Nada retenido.'
+        ],
+        q: 'No una reacción a algo gracioso<br>sino un estado de estar tan plenamente presente<br>que la alegría se convierte en el instrumento entero.'
+      },
+      '2': {
+        h: 'La alegría que conoce el peso de las cosas',
+        p: [
+          'El kinyarwanda pertenece a la familia de lenguas bantúes — una constelación de idiomas que comparten una intuición estructural profunda: que el individuo y lo colectivo son inseparables. El concepto de <span class="term-link" data-term="ubumuntu">ubumuntu</span> — <em>yo soy porque nosotros somos</em> — recorre la lengua como un sistema de raíces. Tu humanidad solo existe a través de su conexión con los demás. Y por eso tu alegría nunca es solo tuya.',
+          'Esto es lo que le da al igitwenge su profundidad particular. No es superficial. No es escapista. Es la risa de personas que viven plenamente — que cargan todo el peso de ser humano y aun así eligen estar presentes ante el deleite cuando llega. La alegría y el dolor no son opuestos en este marco. Son <span class="term-link" data-term="ecotone">ecotonías</span> la una de la otra — cada una más rica por la existencia de la otra.',
+          'Ruanda es un país de colinas, de niebla matutina, de doce millones de personas que comparten un solo idioma y una filosofía que dice que tu ser está tejido en el ser de todos los que te rodean. Cuando alguien ríe con todo el cuerpo en ese contexto, no es expresión individual — es una vibración comunal. Todos en la sala la sienten. Todos son transformados por ella. Eso es ubumuntu en su forma audible más pura.'
+        ],
+        q: 'La risa más profunda no viene<br>de la ligereza. Viene de personas<br>que cargan todo el peso de las cosas<br>y aun así eligen la alegría.'
+      },
+      '3': {
+        h: 'El contagio más honesto',
+        p: [
+          'Puedes fingir una sonrisa. Puedes fabricar una risita. No puedes fingir igitwenge. El cuerpo conoce la diferencia entre la alegría actuada y la real, y también todos los que la presencian. No hay señal más honesta en toda la comunicación humana que alguien riendo tan fuerte que pierde el control de su propia cara.',
+          'Por eso la risa genuina es contagiosa de una manera que la cortesía nunca será. Sortea cada filtro — cultural, lingüístico, social — y aterriza directamente en el cuerpo de quien la escucha. Un salón lleno de personas que no comparten una sola palabra de idioma común puede ser unido por el igitwenge de una persona. Es la frecuencia universal original.',
+          'Piensa en el <span class="term-link" data-term="sillage">sillage</span> — la estela que dejas al moverte por el espacio. La mayoría de las estelas son sutiles, ambientales, detectadas solo por quienes prestan atención. Pero igitwenge deja un rastro imposible de ignorar. Llena un salón como una cuerda pulsada llena el cuerpo de una guitarra. Es <span class="term-link" data-term="resonance">resonancia</span> en su forma más pura — una vibración tan genuina que pone a vibrar a los demás también.',
+          'El <span class="term-link" data-term="ollin">movimiento sagrado</span> en el centro de la existencia no siempre es solemne. A veces el movimiento más sagrado es el temblor de un cuerpo vencido por el deleite.'
+        ],
+        q: 'No puedes fingirlo.<br>El cuerpo conoce la diferencia —<br>y también todos los que escuchan.'
+      },
+      '4': {
+        h: 'El resplandor de la risa compartida',
+        p: [
+          'Hay una cualidad específica en el silencio después de la risa genuina. No un silencio vacío — un silencio lleno. De los que todos en el salón aún sienten, aún calientes, aún conectados por lo que acaba de pasar a través de todos simultáneamente. Ese resplandor es su propio tipo de <span class="term-link" data-term="sillage">sillage</span> — la estela persistente de la alegría en un espacio.',
+          'Recuerdas estos momentos con extraordinaria claridad. No lo que se dijo — a menudo no puedes reconstruir el chiste ni el detonante. Lo que recuerdas es la <em>sensación</em>. El calor en el pecho. El dolor en los músculos del estómago. Las lágrimas. La manera en que alguien al otro lado del salón cruzó tu mirada y eso lo hizo peor, y mejor, simultáneamente.',
+          'Esto es lo que la colección de palabras en este sitio sigue rodeando: las cosas que viven en <span class="term-link" data-term="lacuna">los espacios entre</span>. La huella después del movimiento. La brecha donde entra la luz. El <span class="term-link" data-term="nepantla">entre-medio</span> que resulta ser el lugar más rico. Igitwenge añade algo que las otras palabras no tienen — el recordatorio de que estos espacios no son solo contemplativos. A veces son hilarantes. A veces lo más profundo que tu cuerpo puede hacer es perderse completamente en la alegría.',
+          '<span class="term-link" data-term="apapachar">Abrazar con el alma</span> a veces se ve como sostener a alguien mientras llora. Y a veces se ve como reír tan fuerte juntos que apenas pueden respirar. Ambos son actos de presencia total. Ambos requieren rendirse a la compostura.'
+        ],
+        q: 'El silencio después de la risa genuina<br>no está vacío — está lleno.<br>Todos aún calientes por lo que<br>acaba de pasar a través de ellos.'
+      },
+      '5': {
+        h: 'Elige la frecuencia',
+        p: [
+          'La alegría no es una recompensa para los afortunados. Es una práctica — una sintonización deliberada a la frecuencia que dice <em>sí, estoy aquí, estoy vivo, y algo en este momento merece toda mi atención</em>. Igitwenge es lo que pasa cuando esa práctica alcanza masa crítica. Cuando los <span class="term-link" data-term="limning">bordes que has estado trazando</span> con tanta atención cuidadosa de pronto revelan algo tan sorprendente, tan perfectamente imperfecto, que la única respuesta es dejar que todo el cuerpo conteste.',
+          'No se trata de ser feliz todo el tiempo. Se trata de estar disponible para la felicidad cuando llega — ser un cuerpo formado para <span class="term-link" data-term="resonance">resonar</span> con ella en vez de desviarla.',
+          null,
+          'Ríe con todo el cuerpo. Deja que el sonido llene el salón. Deja el calor de ello donde quiera que vayas.'
+        ],
+        q: null
+      }
+    }
+  },
+  rw: {
+    heroSubtitle: 'Birenze guseka.<br>Uburyo bwimbitse kandi bw\'ukuri bwo kwerekana ibyishimo.<br>Guseka n\'umubiri wawe wose.',
+    sections: {
+      '1': {
+        h: 'Ubwoko bufata umubiri wose',
+        p: [
+          'Hari uburyo bwinshi bwo guseka. Guseka kw\'ubugwaneza, guseka kw\'ubwoba, guseka kw\'ikigaragaza ko wumvise umukino. Guhumeka binyuze mu mazuru uterwa na ecran bikaba bidahagije. Guseka kwisi nyinshi muri iki gihe ni ibicuruzwa — amavuta y\'imibereho, igisubizo ku kintu, umwuka utangira ugahagarara ku rubuga.',
+          'Igitwenge si kimwe muri ibyo. Mu Kinyarwanda — ururimi rw\'u Rwanda, ururimi rw\'Abantu ruvugwa n\'abantu miliyoni cumi n\'ebyiri — igitwenge bivuga guseka gufata umubiri wose. Si igisubizo ahubwo ni ikirunga. Ubwoko bupfundikira amaso, bunyeganyeza amaboko, bukuramo umwuka wose ugomba gutegereza ugaruke. Ubwoko butuma abatazi bahindukirira bagaseka nubwo batazi icyo useka.',
+          'Iri tandukaniro ni ingenzi. Igitwenge ntiterwa n\'umukino — ni ubwoko bwo kuhaba. Ni icyo biba iyo ikintu gikoze ahantu himbitse bihagije ku buryo igisubizo cyonyine cy\'umubiri ari ukwiyegurira umunezero wose. Inda, igituza, umuhogo, amaso — byose birimo. Nta kintu gifashwe inyuma.'
+        ],
+        q: 'Si igisubizo ku kintu gisekeje<br>ahubwo ni imimerere yo kuhaba byuzuye<br>ku buryo ibyishimo bihinduka ikinyabuzima cyose.'
+      },
+      '2': {
+        h: 'Ibyishimo bizi uburemere bw\'ibintu',
+        p: [
+          'Ikinyarwanda ni mu muryango w\'indimi z\'Abantu — itsinda ry\'indimi zisangiye ubumenyi bwimbitse bw\'imiterere: ko umuntu ku giti cye n\'abaturage badashobora gutandukanywa. Igitekerezo cya <span class="term-link" data-term="ubumuntu">ubumuntu</span> — <em>ndi uw\'ubuntu kubera ko turi kumwe</em> — gica mu rurimi nk\'imizi y\'igiti. Ubuntu bwawe bubarizwa gusa mu mihuza n\'abandi. Ni yo mpamvu ibyishimo byawe ntabwo ari ibyawe gusa.',
+          'Iki ni cyo giha igitwenge uburebure bwacyo bwihariye. Si ibyo hejuru. Si ubuhungiro. Ni inseko y\'abantu babeshaho byuzuye — abikorera uburemere bwose bwo kuba umuntu ariko bagahitamo kuhaba mu munezero iyo uje. Ibyishimo n\'agahinda si ibinyuranyi muri ubu buryo. Ni <span class="term-link" data-term="ecotone">ecotone</span> bya bundi — buri kimwe gifite ubukungu kubera ko ikindi kihari.',
+          'U Rwanda ni igihugu cy\'imisozi, cy\'igihu cya mu gitondo, cy\'abantu miliyoni cumi n\'ebyiri basangira ururimi rumwe na filozofiya ivuga ko ubuzima bwawe bwoshywe mu buzima bw\'abo bakikije bose. Iyo umuntu aseka n\'umubiri we wose muri urwo rwego, si ikigaragarizo cy\'umuntu — ni umuvuduko w\'abaturage. Buri wese mu cyumba abumva. Buri wese ahindurwa na byo. Icyo ni ubumuntu mu ishusho yacyo y\'ijwi ryiza cyane.'
+        ],
+        q: 'Inseko yimbitse ntiturutse<br>mu bworoshya. Iturutse mu bantu<br>bikorera uburemere bwose bw\'ibintu<br>ariko bagahitamo ibyishimo.'
+      },
+      '3': {
+        h: 'Kwandura kw\'ukuri kurusha ibindi byose',
+        p: [
+          'Urashobora guhimba inseko. Urashobora gukora igisekeje gito. Ntushobora guhimba igitwenge. Umubiri uzi itandukaniro riri hagati y\'ibyishimo by\'ikigaragaza n\'iby\'ukuri, kandi n\'abari babibona bose barazi. Nta kimenyetso cy\'ukuri kirenze muri itumanaho yose y\'abantu kuruta umuntu useka cyane ku buryo atakigenzura mu maso ye.',
+          'Ni yo mpamvu guseka kw\'ukuri kwandura mu buryo ubugwaneza butazigera bushobora. Birenza buri gahinda — umuco, ururimi, imibereho — bihagurukira mu mubiri w\'umva. Icyumba kizuye abantu badafite ijambo na rimwe risangiwe barashobora guhuzwa n\'igitwenge cy\'umuntu umwe. Ni umuvuduko wa mbere w\'isi yose.',
+          'Tekereza ku <span class="term-link" data-term="sillage">sillage</span> — umwirondoro usigara inyuma yawe uciye mu mwanya. Imyirondoro myinshi ni yoroheje, irangwa gusa n\'abita ku bwenge. Ariko igitwenge gisiga umwirondoro udashoboka kwirengagiza. Guzuza icyumba nk\'uko umurya uvuzwe wuzuza umubiri wa gitari. Ni <span class="term-link" data-term="resonance">resonance</span> mu buryo bwayo bwiza — umuvuduko w\'ukuri cyane utuma n\'abandi bavuza.',
+          '<span class="term-link" data-term="ollin">Imigendekere yera</span> mu mutima w\'ikiremwa ntabwo buri gihe iba ikomeye. Rimwe na rimwe imigendekere yera cyane ni ukunyeganyega kw\'umubiri urengewe n\'umunezero.'
+        ],
+        q: 'Ntushobora kubihimba.<br>Umubiri uzi itandukaniro —<br>kandi n\'abumva bose barazi.'
+      },
+      '4': {
+        h: 'Urumuri rusigara nyuma yo guseka hamwe',
+        p: [
+          'Hari ubwoko bwihariye bw\'ubuceceke nyuma yo guseka kw\'ukuri. Si ubuceceke bwubusa — ni ubuceceke bwuzuye. Ubwoko buri wese mu cyumba akumva, akagirira ubushyuhe, akaba agihuza n\'icyo kimaze kunyura muri bose icyarimwe. Urwo rumuri rusigara ni ubwoko bwayo bwa <span class="term-link" data-term="sillage">sillage</span> — umwirondoro usigara w\'ibyishimo mu mwanya.',
+          'Uribuka ibi bihe neza cyane. Atari icyavuzwe — kenshi ntushobora gusubiza umukino cyangwa icyo byatewe. Icyo wibuka ni <em>ibyumviro</em>. Ubushyuhe mu gituza. Ububabare mu mitsi y\'inda. Amarira. Uko umuntu uri hirya y\'icyumba yakugezeho mu maso n\'ibyo bibi byagenze nabi, kandi byiza, icyarimwe.',
+          'Iki ni cyo itsinda ry\'amagambo kuri uru rubuga rikomeza gukikira: ibintu bibeshaho mu <span class="term-link" data-term="lacuna">mwanya uri hagati</span>. Umwirondoro nyuma y\'imigendekere. Umwobo aho urumuri rwinjira. <span class="term-link" data-term="nepantla">Hagati</span> ahagaragara ko ari ahantu hakungahaye cyane. Igitwenge cyongera ikintu izindi ntagambo zidafite — urwibutso ko izi mwanya atari izo gutekereza gusa. Rimwe na rimwe ni ibisekeje. Rimwe na rimwe ikintu cyimbitse cyane umubiri wawe ushobora gukora ni kwiheza rwose mu byishimo.',
+          '<span class="term-link" data-term="apapachar">Guterura umutima</span> rimwe na rimwe bisa no gufata umuntu aricuza. Kandi rimwe na rimwe bisa no guseka cyane hamwe ku buryo ushobora gukura neza. Byombi ni ibikorwa byo kuhaba byuzuye. Byombi bisaba kwegurira imyifatire y\'ubwitonzi.'
+        ],
+        q: 'Ubuceceke nyuma yo guseka kw\'ukuri<br>si ubusa — ni bwuzuye.<br>Buri wese akumva ubushyuhe bw\'icyo<br>kimaze kunyura muri bo.'
+      },
+      '5': {
+        h: 'Hitamo umuvuduko',
+        p: [
+          'Ibyishimo si igihembo cy\'abahirwe. Ni imyitozo — guhuriza ku muvuduko uvuga <em>yego, ndi hano, ndibeshaho, kandi ikintu muri aka kanya gikwiriye umwitegereze wanjye wose</em>. Igitwenge ni icyo biba iyo iyo myitozo igeze ku bwinshi buhagije. Iyo <span class="term-link" data-term="limning">impera wamaze guhatira</span> witonze cyane zigaragaza ikintu gitangaje cyane, cyuzuye mu buryo butuzuye, ku buryo igisubizo cyonyine ari ukureka umubiri wose usubize.',
+          'Si ukuba unezerewe igihe cyose. Ni ukuba witeguye ibyishimo iyo bije — kuba umubiri wakozwe kugira ngo u<span class="term-link" data-term="resonance">vuzanye</span> na byo aho kubibangurira.',
+          null,
+          'Seka n\'umubiri wawe wose. Reka ijwi rizuze icyumba. Siga ubushyuhe bwabyo aho ujya hose.'
+        ],
+        q: null
+      }
+    }
+  }
+};
+</script>
+<script src="i18n.js"></script>
+
+</body>
+</html>

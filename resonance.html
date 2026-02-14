@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resonance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFBF7;
+    --amber: #C4956A;
+    --deep-amber: #A67744;
+    --umber: #3D2B1F;
+    --deep-umber: #2A1D14;
+    --smoke: #8B7D6B;
+    --mist: #D4C9B8;
+    --blush: #E8D5C4;
+    --ink: #1A1210;
+    --faint: rgba(166, 141, 107, 0.08);
+    /* resonance — bronze, copper, the body of instruments */
+    --tone: #A88D6B;
+    --deep-tone: #7A6545;
+    --sustain: #C8B494;
+    --light: rgba(166, 141, 107, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; scrollbar-width: thin; scrollbar-color: var(--mist) transparent; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--warm-white); color: var(--umber); overflow-x: hidden; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+  .word-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; align-items: center; gap: 2.5rem; padding: 1.2rem 2rem; background: rgba(253, 251, 247, 0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid rgba(166, 141, 107, 0.08); transform: translateY(-100%); transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1); overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+  .word-nav.visible { transform: translateY(0); }
+  .word-nav::-webkit-scrollbar { display: none; }
+  .word-nav-item, .word-nav-dot { flex-shrink: 0; }
+  .word-nav-item { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 0.95rem; letter-spacing: 0.1em; color: var(--mist); cursor: pointer; transition: all 0.4s ease; text-decoration: none; position: relative; padding-bottom: 2px; }
+  .word-nav-item:hover { color: var(--tone); }
+  .word-nav-item.active { color: var(--deep-umber); }
+  .word-nav-item.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px; background: var(--tone); }
+  .word-nav-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--mist); flex-shrink: 0; }
+
+  .progress-bar { position: fixed; top: 0; left: 0; height: 2px; background: linear-gradient(90deg, var(--tone), var(--deep-tone)); z-index: 1000; width: 0%; transition: width 0.1s linear; }
+
+  .nav-dots { position: fixed; right: 2rem; top: 50%; transform: translateY(-50%); z-index: 100; display: flex; flex-direction: column; gap: 1.2rem; }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--mist); cursor: pointer; transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1); position: relative; }
+  .nav-dot.active { background: var(--tone); transform: scale(1.6); }
+  .nav-dot::after { content: attr(data-label); position: absolute; right: 1.4rem; top: 50%; transform: translateY(-50%); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--smoke); white-space: nowrap; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; font-family: 'DM Sans', sans-serif; }
+  .nav-dot:hover::after { opacity: 1; }
+
+  .section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 6rem 2rem; position: relative; }
+  .section-inner { max-width: 680px; width: 100%; opacity: 0; transform: translateY(40px); transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1), transform 1.2s cubic-bezier(0.23, 1, 0.32, 1); }
+  .section-inner.visible { opacity: 1; transform: translateY(0); }
+
+  .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
+  .hero-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 30%, #e0d4c4 0%, var(--warm-white) 60%); z-index: 0; }
+  .hero-particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .particle { position: absolute; border-radius: 50%; background: var(--tone); opacity: 0; animation: drift 12s infinite ease-in-out; }
+
+  @keyframes drift {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    20% { opacity: 0.1; }
+    50% { opacity: 0.05; transform: translate(var(--dx), var(--dy)) scale(1); }
+    80% { opacity: 0.08; }
+    100% { opacity: 0; transform: translate(var(--dx2), var(--dy2)) scale(0.3); }
+  }
+
+  .hero-content { position: relative; z-index: 2; }
+  .hero-word { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: clamp(3rem, 7vw, 6rem); color: var(--umber); letter-spacing: 0.12em; margin-bottom: 0.5rem; opacity: 0; animation: fadeUp 2s 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .hero-pronunciation { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 300; font-size: 1.1rem; color: var(--smoke); letter-spacing: 0.08em; margin-bottom: 2.5rem; opacity: 0; animation: fadeUp 2s 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards; display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
+
+  .speak-btn { background: none; border: none; cursor: pointer; padding: 0.3rem; border-radius: 50%; transition: all 0.4s ease; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .speak-btn svg { width: 16px; height: 16px; fill: none; stroke: var(--mist); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.4s ease; }
+  .speak-btn:hover svg { stroke: var(--tone); }
+  .speak-btn.playing svg { stroke: var(--tone); }
+
+  .hero-line { width: 40px; height: 1px; background: var(--tone); margin: 0 auto 2.5rem; opacity: 0; animation: fadeUp 2s 1s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .hero-subtitle { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(1.05rem, 2vw, 1.25rem); color: var(--smoke); line-height: 1.9; max-width: 520px; margin: 0 auto; opacity: 0; animation: fadeUp 2s 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+  .scroll-cue { position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%); opacity: 0; animation: fadeUp 2s 2s cubic-bezier(0.23, 1, 0.32, 1) forwards; z-index: 2; }
+  .scroll-cue span { display: block; width: 1px; height: 40px; background: linear-gradient(to bottom, var(--tone), transparent); margin: 0 auto; animation: pulse-line 2.5s infinite ease-in-out; }
+
+  @keyframes pulse-line { 0%, 100% { opacity: 0.3; transform: scaleY(0.6); } 50% { opacity: 0.8; transform: scaleY(1); } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(25px); } to { opacity: 1; transform: translateY(0); } }
+
+  h2 { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: clamp(1.8rem, 4vw, 2.6rem); color: var(--deep-umber); margin-bottom: 2rem; line-height: 1.25; letter-spacing: 0.02em; }
+  .section-label { font-family: 'DM Sans', sans-serif; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--tone); margin-bottom: 1.5rem; font-weight: 500; }
+  p { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 1.02rem; line-height: 1.85; color: var(--umber); margin-bottom: 1.4rem; }
+  p:last-child { margin-bottom: 0; }
+  .pullquote { font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 400; font-size: clamp(1.3rem, 3vw, 1.7rem); line-height: 1.6; color: var(--deep-tone); padding: 2rem 0; border-top: 1px solid var(--light); border-bottom: 1px solid var(--light); margin: 2.5rem 0; text-align: center; }
+
+  .section-dark { background: var(--deep-umber); color: var(--cream); }
+  .section-dark h2 { color: var(--blush); }
+  .section-dark p { color: var(--mist); }
+  .section-dark .section-label { color: var(--sustain); }
+  .section-dark .pullquote { color: var(--sustain); border-color: rgba(166, 141, 107, 0.15); }
+  .section-dark .term-link { color: inherit; border-bottom-color: rgba(166, 141, 107, 0.15); }
+  .section-dark .term-link:hover { color: var(--sustain); border-bottom-color: rgba(166, 141, 107, 0.4); }
+
+  .section-warm { background: var(--cream); }
+
+  /* ====== BRONZE SECTION ====== */
+  .section-bronze { background: #28221A; color: #e0d4c4; }
+  .section-bronze h2 { color: var(--sustain); }
+  .section-bronze p { color: #b8a894; }
+  .section-bronze .section-label { color: var(--tone); }
+  .section-bronze .pullquote { color: var(--sustain); border-color: rgba(166, 141, 107, 0.15); }
+  .section-bronze .term-link { color: inherit; border-bottom-color: rgba(166, 141, 107, 0.15); }
+  .section-bronze .term-link:hover { color: var(--sustain); border-bottom-color: rgba(166, 141, 107, 0.4); }
+
+  .term-link { color: inherit; border-bottom: 1px solid rgba(166, 141, 107, 0.12); cursor: pointer; transition: border-color 0.4s ease, color 0.4s ease; position: relative; text-decoration: none; }
+  .term-link:hover { color: var(--deep-tone); border-bottom-color: rgba(166, 141, 107, 0.4); }
+
+  .term-modal-overlay { position: fixed; inset: 0; background: rgba(26, 18, 16, 0.4); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 500; opacity: 0; pointer-events: none; transition: opacity 0.35s ease; }
+  .term-modal-overlay.active { opacity: 1; pointer-events: all; }
+  .term-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); z-index: 501; background: var(--warm-white); border: 1px solid rgba(166, 141, 107, 0.15); border-radius: 3px; max-width: 480px; width: calc(100% - 3rem); padding: 2.5rem; opacity: 0; pointer-events: none; transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.23, 1, 0.32, 1); }
+  .term-modal.active { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) scale(1); }
+  .term-modal-close { position: absolute; top: 1rem; right: 1.2rem; background: none; border: none; font-size: 1.2rem; color: var(--mist); cursor: pointer; transition: color 0.3s ease; line-height: 1; }
+  .term-modal-close:hover { color: var(--umber); }
+  .term-modal-word { font-family: 'Cormorant Garamond', serif; font-weight: 400; font-size: 1.6rem; color: var(--deep-umber); margin-bottom: 0.3rem; letter-spacing: 0.05em; }
+  .term-modal-pron { font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 0.85rem; color: var(--smoke); margin-bottom: 1.2rem; }
+  .term-modal-def { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 0.92rem; line-height: 1.8; color: var(--umber); margin-bottom: 1.2rem; }
+  .term-modal-connections { border-top: 1px solid var(--faint); padding-top: 1rem; margin-top: 0.5rem; }
+  .term-modal-connections-label { font-family: 'DM Sans', sans-serif; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--tone); margin-bottom: 0.6rem; font-weight: 500; }
+  .term-modal-connection { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; color: var(--smoke); line-height: 1.7; padding-left: 0.8rem; border-left: 1px solid var(--faint); margin-bottom: 0.5rem; }
+  .term-modal-connection em { color: var(--deep-tone); font-style: normal; }
+
+  .finale { text-align: center; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 70%, #e0d4c4 0%, var(--warm-white) 50%); }
+  .finale h2 { font-size: clamp(2rem, 5vw, 3.2rem); margin-bottom: 1.5rem; }
+  .finale p { max-width: 520px; text-align: center; }
+  .finale-line { width: 60px; height: 1px; background: var(--tone); margin: 2.5rem auto; }
+  .finale-small { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--smoke); margin-top: 3rem; }
+
+  .colophon { text-align: center; padding: 4rem 2rem; background: var(--warm-white); }
+  .colophon p { font-size: 0.75rem; color: var(--mist); letter-spacing: 0.05em; }
+  .colophon a { color: var(--tone); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.3s ease; }
+  .colophon a:hover { border-bottom-color: var(--tone); }
+
+  #scent-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.3; }
+
+  @media (max-width: 768px) { .section { padding: 4rem 1.5rem; } .nav-dots { right: 1rem; gap: 1rem; } .nav-dot::after { display: none; } .hero-word { letter-spacing: 0.08em; } .word-nav { gap: 1.2rem; padding: 1rem 1.5rem; } .word-nav-item { font-size: 0.82rem; letter-spacing: 0.06em; } }
+  @media (max-width: 480px) { .section { padding: 3rem 1.2rem; } .nav-dots { display: none; } .word-nav { gap: 0.8rem; } .word-nav-item { font-size: 0.75rem; } }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<canvas id="scent-canvas"></canvas>
+
+<nav class="word-nav" id="wordNav">
+  <a class="word-nav-item" data-word="sillage" href="/">sillage</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="apapachar" href="apapachar.html">apapachar</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ecotone" href="ecotone.html">ecotone</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="crown-shyness" href="crown-shyness.html">crown shyness</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="lacuna" href="lacuna.html">lacuna</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="centripetal" href="centripetal.html">centripetal</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="limning" href="limning.html">limning</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="nepantla" href="nepantla.html">nepantla</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ollin" href="ollin.html">ollin</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item active" data-word="resonance">resonance</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="igitwenge" href="igitwenge.html">igitwenge</a>
+</nav>
+
+<nav class="nav-dots" id="navDots">
+  <div class="nav-dot active" data-section="0" data-label="Resonance"></div>
+  <div class="nav-dot" data-section="1" data-label="The Sounding Body"></div>
+  <div class="nav-dot" data-section="2" data-label="Intention"></div>
+  <div class="nav-dot" data-section="3" data-label="Wavelength"></div>
+  <div class="nav-dot" data-section="4" data-label="What Persists"></div>
+  <div class="nav-dot" data-section="5" data-label="Something Living"></div>
+</nav>
+
+<div class="term-modal-overlay" id="termOverlay"></div>
+<div class="term-modal" id="termModal">
+  <button class="term-modal-close" id="termClose">&times;</button>
+  <div class="term-modal-word" id="termWord"></div>
+  <div class="term-modal-pron" id="termPron"></div>
+  <div class="term-modal-def" id="termDef"></div>
+  <div class="term-modal-connections" id="termConnections">
+    <div class="term-modal-connections-label">Resonances</div>
+    <div id="termConnectionsList"></div>
+  </div>
+</div>
+
+
+<!-- ======== HERO ======== -->
+<section class="hero section" data-index="0">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-content">
+    <div class="hero-word">resonance</div>
+    <div class="hero-pronunciation">
+      /&#712;r&#603;z&#601;n&#601;ns/ &#8212; from Latin resonare, &#8220;to sound again&#8221;
+      <button class="speak-btn" id="speakBtn" aria-label="Hear pronunciation">
+        <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </button>
+    </div>
+    <div class="hero-line"></div>
+    <div class="hero-subtitle">
+      The sustained vibration that persists.<br>
+      The sound that only emerges when<br>
+      intention meets action.
+    </div>
+  </div>
+  <div class="scroll-cue"><span></span></div>
+</section>
+
+
+<!-- ======== I. THE SOUNDING BODY ======== -->
+<section class="section" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">I</div>
+    <h2>Silent until the strings are plucked</h2>
+    <p>Think of the body of a guitar. The body of a cello or violin. It's a resonating body — a shape designed to receive vibration and sustain it, to take a plucked string and fill a room. But without the strings being plucked, it's silent. Beautiful, perhaps. But silent.</p>
+
+    <p>Resonance only emerges when intention meets action. When you add that intentional being there — the fingers on the strings, the bow drawn with care — the note emerges and fills and resonates. The body amplifies what intention initiates.</p>
+
+    <div class="pullquote">
+      It's only when you pluck the strings,<br>
+      when you add that intentional being there,<br>
+      that the note emerges and fills and resonates.
+    </div>
+
+    <p>This is the distinction that separates traces that persist from those that collapse into entropy. Resonance isn't automatic. It requires a body shaped to sustain, and an action intentional enough to set it vibrating. Without either one, the sound dies at the source.</p>
+  </div>
+</section>
+
+
+<!-- ======== II. INTENTION ======== -->
+<section class="section section-bronze" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">II</div>
+    <h2>The care that makes things persist</h2>
+    <p>If you're actually intentionally planting seeds — if you're living through space with care — that care resonates. It remains. A little like a sparkle that grows into an ember and into a fire. But if you're not giving any attention to it, if you're just carelessly tossing things out, they won't survive. They will just collapse into entropy.</p>
+
+    <div class="pullquote">
+      If you're living through space with care,<br>
+      that care resonates. It remains.<br>
+      A sparkle that grows into an ember<br>
+      and into a fire.
+    </div>
+  </div>
+</section>
+
+
+<!-- ======== III. WAVELENGTH ======== -->
+<section class="section section-warm" data-index="3">
+  <div class="section-inner">
+    <div class="section-label">III</div>
+    <h2>The longer wavelengths carry more gravity</h2>
+    <p>Think about the <span class="term-link" data-term="gratification-loop">gratification loop</span> — those really short, short, short time cycles. Very short-term thinking. Not in tune with the longer term, longer way of resonance. So short that it doesn't have the same directionality, the same intentionality as longer wavelengths.</p>
+
+    <p>A longer period has so much more directional gravity. It's got this really long vector. Imagine what it takes to change that vector. There's a purity to that resonance. All these other little things — the surface distractions — are really short. They don't have the same inertial, multiplied value. They're just little buzzing, short little units.</p>
+
+    <div class="pullquote">
+      The longer the wavelength,<br>
+      the greater the directional gravity.<br>
+      Short cycles buzz. Long cycles move worlds.
+    </div>
+
+    <p>This maps across all scales of time. From radio waves to visible light to gamma rays — each wavelength carries different information, different power. The geologic time scale is so much different from the news cycle. There's the possibility that things exist on deeper, more powerful, near-planetary resonance time frames. Things that look like nothing when measured in hours but are reshaping everything when measured in decades.</p>
+
+    <p>Your <span class="term-link" data-term="ollin">ollin</span> — your sacred motion through the world — operates on these longer wavelengths whether you notice or not. The question is whether you're intentionally tuning to them.</p>
+  </div>
+</section>
+
+
+<!-- ======== IV. WHAT PERSISTS ======== -->
+<section class="section section-dark" data-index="4">
+  <div class="section-inner">
+    <div class="section-label">IV</div>
+    <h2>Planting gardens you may never see</h2>
+
+    <div class="pullquote">
+      True resonance isn't what you leave<br>
+      but what continues to grow<br>
+      after you've gone.
+    </div>
+
+    <p>Resonant roots grow at every <span class="term-link" data-term="ecotone">boundary</span> where two systems are pressing into each other with care. The more shared surface between them, the deeper and more numerous these resonances become. They're the connective tissue that makes two things more than neighbors — they become resonant with each other.</p>
+
+    <p>Where your trace overlaps with others' — creating interference patterns, surfacing connections neither of you would have seen alone — that's <span class="term-link" data-term="limning">resonant sillage</span>. The personal becoming collective. The individual note becoming a chord.</p>
+  </div>
+</section>
+
+
+<!-- ======== V. SOMETHING LIVING ======== -->
+<section class="finale section" data-index="5">
+  <div class="section-inner" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="section-label">V</div>
+    <h2>Something beautiful, something living</h2>
+
+    <div class="finale-line"></div>
+
+    <p>Create things that resonate. Plant seeds in your wake. The resonance that persists is the one that was seeded with care and tended across time.</p>
+
+    <p style="margin-top: 1.5rem; font-style: italic; font-family: 'Cormorant Garamond', serif; color: var(--smoke); font-size: 0.95rem;">Pluck the string with intention.<br>The body was made to sustain.<br>Let it resonate.</p>
+
+    <div class="finale-small">digitalsillage.com</div>
+  </div>
+</section>
+
+<footer class="colophon">
+  <p style="font-size: 0.65rem; color: var(--mist); letter-spacing: 0.12em; margin-bottom: 0.8rem;">muse bear inspired</p>
+  <p><a href="https://room527.com" target="_blank">Room 527</a> · 2026</p>
+</footer>
+
+
+<script>
+const terms = {
+  'sillage': {
+    word: 'sillage',
+    pron: '/si\u02d0\u02c8j\u0251\u02d0\u0292/ \u2014 French, noun',
+    def: 'The wafting trail that lingers as you pass through. Resonance is what happens when sillage doesn\u2019t dissipate \u2014 when the trace you leave is seeded with enough care that it sustains, grows, and invites others into it.',
+    connections: [
+      { label: 'Resonance \u00a7 II', text: 'Care that resonates \u2014 a sparkle growing into an ember and into a fire' },
+      { label: 'Resonance \u00a7 IV', text: 'Where your trace overlaps with others\u2019 \u2014 resonant sillage' }
+    ]
+  },
+  'apapachar': {
+    word: 'apapachar',
+    pron: '/ah\u02c8pah\u02c8pah\u02c8char/ \u2014 Nahuatl',
+    def: 'To embrace with the soul. Care embedded in the trace. Resonance requires apapachar \u2014 the intentional tenderness that transforms a passing moment into something that persists. Without care, things collapse into entropy.',
+    connections: [
+      { label: 'Resonance \u00a7 II', text: 'Living through space with care \u2014 that care resonates, it remains' },
+      { label: 'Ollin', text: 'Three Nahuatl words for what English overlooks' }
+    ]
+  },
+  'gratification-loop': {
+    word: 'gratification loop',
+    pron: '',
+    def: 'The short-term cycle of immediate reward. Very short time horizons that lack the directional gravity of longer wavelengths. The buzzing, short units that don\u2019t have the same inertial, multiplied value as resonance operating on deeper time scales. Consumption without intention.',
+    connections: [
+      { label: 'Resonance \u00a7 III', text: 'So short it doesn\u2019t have the same directionality or intentionality' },
+      { label: 'Centripetal', text: 'The gravity that keeps you orbiting the same feed instead of creating' }
+    ]
+  },
+  'ollin': {
+    word: 'ollin',
+    pron: '/\u02c8ol\u02d0in/ \u2014 Nahuatl',
+    def: 'Sacred movement. The dynamic pulse at the center of all existence. Your ollin \u2014 your sacred motion through the world \u2014 operates on longer wavelengths whether you notice or not. The question is whether you\u2019re intentionally tuning to them.',
+    connections: [
+      { label: 'Resonance \u00a7 III', text: 'Sacred motion operating on longer wavelengths' },
+      { label: 'Nepantla', text: 'The Nahuatl vocabulary for things English can\u2019t name' }
+    ]
+  },
+  'ecotone': {
+    word: 'ecotone',
+    pron: '/\u02c8i\u02d0k\u0259\u02ccto\u028an/ \u2014 from Greek oikos + tonos',
+    def: 'The tension between two homes. Resonant roots grow at every ecotone \u2014 every boundary where two systems press into each other with care. The more shared surface, the deeper the resonances become.',
+    connections: [
+      { label: 'Resonance \u00a7 IV', text: 'Resonant roots at every boundary where systems press into each other' },
+      { label: 'Crown Shyness', text: 'The gap as the richest zone \u2014 where resonances are deepest' }
+    ]
+  },
+  'limning': {
+    word: 'limning',
+    pron: '/\u02c8l\u026am\u026a\u014b/ \u2014 from Latin luminare',
+    def: 'To trace the outline, to illuminate the edge. Resonant sillage is what happens where your trace overlaps with others\u2019 \u2014 the individual note becoming a chord. Limning those overlaps surfaces connections neither party would have seen alone.',
+    connections: [
+      { label: 'Resonance \u00a7 IV', text: 'The personal becoming collective \u2014 the individual note becoming a chord' },
+      { label: 'Ecotone', text: 'Tracing the boundary where resonant roots grow' }
+    ]
+  }
+};
+
+const overlay = document.getElementById('termOverlay');
+const modal = document.getElementById('termModal');
+const termWord = document.getElementById('termWord');
+const termPron = document.getElementById('termPron');
+const termDef = document.getElementById('termDef');
+const termConnectionsList = document.getElementById('termConnectionsList');
+const termConnections = document.getElementById('termConnections');
+
+function openTerm(key) {
+  const t = terms[key]; if (!t) return;
+  termWord.textContent = t.word; termPron.textContent = t.pron;
+  termPron.style.display = t.pron ? 'block' : 'none';
+  termDef.textContent = t.def; termConnectionsList.innerHTML = '';
+  if (t.connections && t.connections.length) {
+    termConnections.style.display = 'block';
+    t.connections.forEach(c => { const div = document.createElement('div'); div.className = 'term-modal-connection'; div.innerHTML = `<em>${c.label}</em> \u2014 ${c.text}`; termConnectionsList.appendChild(div); });
+  } else { termConnections.style.display = 'none'; }
+  overlay.classList.add('active'); modal.classList.add('active');
+}
+function closeTerm() { overlay.classList.remove('active'); modal.classList.remove('active'); }
+overlay.addEventListener('click', closeTerm);
+document.getElementById('termClose').addEventListener('click', closeTerm);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTerm(); });
+document.querySelectorAll('.term-link').forEach(el => { el.addEventListener('click', (e) => { e.preventDefault(); openTerm(el.dataset.term); }); });
+
+const progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', () => { const scrollTop = window.scrollY; const docHeight = document.documentElement.scrollHeight - window.innerHeight; progressBar.style.width = (scrollTop / docHeight * 100) + '%'; });
+
+const wordNav = document.getElementById('wordNav');
+window.addEventListener('scroll', () => { if (window.scrollY > window.innerHeight * 0.6) { wordNav.classList.add('visible'); } else { wordNav.classList.remove('visible'); } });
+
+const revealObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); }); }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+document.querySelectorAll('.section-inner').forEach(el => revealObserver.observe(el));
+
+const sections = document.querySelectorAll('.section');
+const dots = document.querySelectorAll('.nav-dot');
+const sectionObserver = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { const index = entry.target.dataset.index; dots.forEach(d => d.classList.remove('active')); dots[index]?.classList.add('active'); } }); }, { threshold: 0.4 });
+sections.forEach(s => sectionObserver.observe(s));
+dots.forEach(dot => { dot.addEventListener('click', () => { const idx = dot.dataset.section; sections[idx]?.scrollIntoView({ behavior: 'smooth' }); }); });
+
+const particleContainer = document.getElementById('heroParticles');
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div'); p.className = 'particle';
+  const size = 3 + Math.random() * 8;
+  p.style.width = size + 'px'; p.style.height = size + 'px';
+  p.style.left = (10 + Math.random() * 80) + '%'; p.style.top = (10 + Math.random() * 80) + '%';
+  p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px'); p.style.setProperty('--dy', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dx2', (Math.random() * 120 - 60) + 'px'); p.style.setProperty('--dy2', (Math.random() * 120 - 60) + 'px');
+  p.style.animationDelay = (Math.random() * 10) + 's'; p.style.animationDuration = (8 + Math.random() * 8) + 's';
+  particleContainer.appendChild(p);
+}
+
+const canvas = document.getElementById('scent-canvas');
+const ctx = canvas.getContext('2d');
+let w, h; let trails = [];
+function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+class Trail {
+  constructor() { this.reset(); }
+  reset() { this.x = Math.random() * w; this.y = Math.random() * h; this.vx = (Math.random() - 0.5) * 0.25; this.vy = (Math.random() - 0.5) * 0.25; this.life = 0; this.maxLife = 400 + Math.random() * 400; this.radius = 80 + Math.random() * 120; }
+  update() { this.x += this.vx; this.y += this.vy; this.life++; if (this.life > this.maxLife) this.reset(); }
+  draw() { const progress = this.life / this.maxLife; const alpha = Math.sin(progress * Math.PI) * 0.02; const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius); gradient.addColorStop(0, `rgba(166, 141, 107, ${alpha})`); gradient.addColorStop(1, 'rgba(166, 141, 107, 0)'); ctx.fillStyle = gradient; ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2); }
+}
+for (let i = 0; i < 5; i++) { const t = new Trail(); t.life = Math.random() * t.maxLife; trails.push(t); }
+function animate() { ctx.clearRect(0, 0, w, h); trails.forEach(t => { t.update(); t.draw(); }); requestAnimationFrame(animate); }
+animate();
+
+document.getElementById('speakBtn').addEventListener('click', function() {
+  const btn = this;
+  btn.classList.add('playing');
+  var audio = new Audio('audio/resonance.mp3');
+  audio.addEventListener('canplaythrough', function() { audio.play(); });
+  audio.addEventListener('ended', function() { btn.classList.remove('playing'); });
+  audio.addEventListener('error', function() {
+    const utterance = new SpeechSynthesisUtterance('resonance');
+    utterance.lang = 'en-US';
+    utterance.rate = 0.75;
+    utterance.pitch = 1;
+    utterance.onend = () => btn.classList.remove('playing');
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  });
+});
+
+// Auto-scroll active word into view in nav
+var _navRef = document.getElementById('wordNav');
+var activeWord = _navRef && _navRef.querySelector('.word-nav-item.active');
+if (activeWord) {
+  setTimeout(function() {
+    activeWord.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, 100);
+}
+</script>
+
+<script>
+window.pageTranslations = {
+  es: {
+    heroSubtitle: 'La vibración sostenida que persiste.<br>El sonido que solo emerge cuando<br>la intención encuentra la acción.',
+    sections: {
+      '1': {
+        h: 'Silencioso hasta que se pulsan las cuerdas',
+        p: [
+          'Piensa en el cuerpo de una guitarra. El cuerpo de un violonchelo o un violín. Es un cuerpo resonante — una forma diseñada para recibir vibración y sostenerla, para tomar una cuerda pulsada y llenar una habitación. Pero sin que las cuerdas sean pulsadas, es silencioso. Hermoso, quizás. Pero silencioso.',
+          'La resonancia solo emerge cuando la intención encuentra la acción. Cuando agregas ese ser intencional allí — los dedos en las cuerdas, el arco trazado con cuidado — la nota emerge y llena y resuena. El cuerpo amplifica lo que la intención inicia.',
+          'Esta es la distinción que separa las huellas que persisten de las que colapsan en entropía. La resonancia no es automática. Requiere un cuerpo formado para sostener, y una acción lo suficientemente intencional para ponerlo a vibrar. Sin ninguno de los dos, el sonido muere en la fuente.'
+        ],
+        q: 'Solo cuando pulsas las cuerdas,<br>cuando agregas ese ser intencional allí,<br>la nota emerge y llena y resuena.'
+      },
+      '2': {
+        h: 'El cuidado que hace que las cosas persistan',
+        p: [
+          'Si realmente estás plantando semillas con intención — si estás viviendo a través del espacio con cuidado — ese cuidado resuena. Permanece. Un poco como una chispa que crece en brasa y en fuego. Pero si no le prestas atención, si simplemente lanzas cosas sin cuidado, no sobrevivirán. Simplemente colapsarán en entropía.'
+        ],
+        q: 'Si estás viviendo a través del espacio con cuidado,<br>ese cuidado resuena. Permanece.<br>Una chispa que crece en brasa<br>y en fuego.'
+      },
+      '3': {
+        h: 'Las longitudes de onda más largas llevan más gravedad',
+        p: [
+          'Piensa en el <span class="term-link" data-term="gratification-loop">ciclo de gratificación</span> — esos ciclos de tiempo realmente cortos, cortos, cortos. Pensamiento a muy corto plazo. No en sintonía con la manera más larga de resonancia. Tan corto que no tiene la misma direccionalidad, la misma intencionalidad que las longitudes de onda más largas.',
+          'Un período más largo tiene mucha más gravedad direccional. Tiene un vector realmente largo. Imagina lo que se necesita para cambiar ese vector. Hay una pureza en esa resonancia. Todas estas otras pequeñas cosas — las distracciones superficiales — son realmente cortas. No tienen el mismo valor inercial y multiplicado. Son solo pequeños zumbidos, unidades cortas.',
+          'Esto se mapea a través de todas las escalas de tiempo. Desde ondas de radio hasta luz visible hasta rayos gamma — cada longitud de onda lleva diferente información, diferente poder. La escala de tiempo geológico es tan diferente del ciclo de noticias. Existe la posibilidad de que las cosas existan en marcos temporales de resonancia más profundos, más poderosos, casi planetarios. Cosas que parecen nada cuando se miden en horas pero están remodelando todo cuando se miden en décadas.',
+          'Tu <span class="term-link" data-term="ollin">ollin</span> — tu movimiento sagrado a través del mundo — opera en estas longitudes de onda más largas, lo notes o no. La pregunta es si estás sintonizándote intencionalmente con ellas.'
+        ],
+        q: 'Cuanto más larga la longitud de onda,<br>mayor la gravedad direccional.<br>Los ciclos cortos zumban. Los ciclos largos mueven mundos.'
+      },
+      '4': {
+        h: 'Plantar jardines que quizás nunca veas',
+        p: [
+          'Raíces resonantes crecen en cada <span class="term-link" data-term="ecotone">frontera</span> donde dos sistemas se presionan mutuamente con cuidado. Cuanta más superficie compartida entre ellos, más profundas y numerosas se vuelven estas resonancias. Son el tejido conectivo que hace que dos cosas sean más que vecinas — se vuelven resonantes entre sí.',
+          'Donde tu huella se superpone con la de otros — creando patrones de interferencia, revelando conexiones que ninguno de los dos habría visto solo — eso es <span class="term-link" data-term="limning">sillage resonante</span>. Lo personal volviéndose colectivo. La nota individual convirtiéndose en acorde.'
+        ],
+        q: 'La verdadera resonancia no es lo que dejas<br>sino lo que sigue creciendo<br>después de que te has ido.'
+      },
+      '5': {
+        h: 'Algo hermoso, algo vivo',
+        p: [
+          null,
+          'Crea cosas que resuenen. Planta semillas en tu estela. La resonancia que persiste es la que fue sembrada con cuidado y cultivada a través del tiempo.'
+        ],
+        q: null
+      }
+    }
+  },
+  rw: {
+    heroSubtitle: 'Umuvuduko ukomeza udahagarara.<br>Ijwi rituruka gusa iyo<br>intego ihura n\'igikorwa.',
+    sections: {
+      '1': {
+        h: 'Ucecetse kugeza igihe imirya ivuzwe',
+        p: [
+          'Tekereza umubiri wa gitari. Umubiri wa violoncelle cyangwa violon. Ni umubiri uvuza — ishusho yakozwe kugira ngo yakire umuvuduko ikawubungabunga, ifate umurya wavuzwe ikuzuza icyumba. Ariko nta murya uvuzwe, ni ucecetse. Mwiza, birashoboka. Ariko ucecetse.',
+          'Resonance ituruka gusa iyo intego ihura n\'igikorwa. Iyo wongereyeho icyo guhaba ufite intego — intoki ku mirya, umuheto ukuruwe witonze — ijwi rituruka rikuzura rikavuza. Umubiri wongera icyo intego itangiza.',
+          'Iri ni itandukaniro ritandukanya imyirondoro ikomeza n\'iyangirika. Resonance ntibaho ku bwayo. Isaba umubiri wakozwe kubungabunga, n\'igikorwa gifite intego ihagije yo gutangiza umuvuduko. Nta na kimwe muri ibyo, ijwi ripfa aho rituruka.'
+        ],
+        q: 'Ni gusa iyo uvuza imirya,<br>iyo wongereyeho icyo guhaba ufite intego,<br>ijwi rituruka rikuzura rikavuza.'
+      },
+      '2': {
+        h: 'Kwita kubandi gutuma ibintu bikomeza',
+        p: [
+          'Niba mu by\'ukuri utera imbuto ufite intego — niba ubeshaho uciye mu mwanya witonze — icyo kwita biravuza. Bisigara. Bimeze nk\'urumuri ruto rukura rukaba umuriro muto hanyuma umuriro. Ariko niba utabiha umwitegereze, niba ujugunya ibintu utitaye, ntibizabaho. Bizangirika gusa.'
+        ],
+        q: 'Niba ubeshaho uciye mu mwanya witonze,<br>icyo kwita biravuza. Bisigara.<br>Urumuri ruto rukura rukaba umuriro muto<br>hanyuma umuriro.'
+      },
+      '3': {
+        h: 'Uburebure bw\'umurongo burerure bujyana n\'ububito kurushaho',
+        p: [
+          'Tekereza ku <span class="term-link" data-term="gratification-loop">ruziga rw\'ibyishimo by\'ako kanya</span> — izo nziga z\'igihe ngufi cyane, ngufi, ngufi. Gutekereza mu gihe gigufi cyane. Bidahuye n\'inzira ndende ya resonance. Bigufi cyane ku buryo bidafite icyerekezo kimwe, intego imwe n\'uburebure bw\'imirongo miremire.',
+          'Igihe kirekire gifite ububito bwinshi bw\'icyerekezo. Gifite vekitori ndende cyane. Tekereza icyo bisaba guhindura iyo vekitori. Hari ubudahangarwa muri iyo resonance. Ibindi bintu byose bito — ibintu by\'inyuma bitavuga — ni bigufi cyane. Ntibifite agaciro kamwe ka inersi, k\'ubwinshi. Ni udusimba duto gusa, ibice bigufi.',
+          'Ibi bigenda kimwe mu bipimo byose by\'igihe. Kuva ku mirongo ya radiyo kugeza ku rumuri rugaragara kugeza ku mirasire gamma — buri burebure bw\'umurongo bujyana n\'amakuru atandukanye, ububasha butandukanye. Igipimo cy\'igihe cya geologiya kitandukanye cyane n\'uruziga rw\'amakuru. Birashoboka ko ibintu bihari mu bipimo by\'igihe bya resonance birebire, bikomeye, bimeze nk\'iby\'isi. Ibintu bisa n\'ubusa bipimwe mu masaha ariko bishyira ibintu byose ahandi bipimwe mu myaka icumi.',
+          '<span class="term-link" data-term="ollin">Ollin</span> yawe — imigendekere yawe yera mu isi — ikora kuri ubu burebure bw\'imirongo miremire waba ubibona cyangwa udabibona. Ikibazo ni niba witonze ubihuriza.'
+        ],
+        q: 'Uko uburebure bw\'umurongo burerure,<br>ni ko ububito bw\'icyerekezo buba bunini.<br>Inziga ngufi zirasimba. Inziga ndende zimura ibihe.'
+      },
+      '4': {
+        h: 'Gutera ubusitani ushobora kutazigera ubona',
+        p: [
+          'Imizi ya resonance ikura kuri buri <span class="term-link" data-term="ecotone">rubibe</span> aho sisitemu ebyiri zishyirana zitonze. Uko urubuga rusangiwe rwaguka, ni ko resonance zikura mu bujyakuzimu no mu bwinshi. Ni urutugu ruhuza rutuma ibintu bibiri biruta kuba abaturanyi — bihinduka ibivuza hamwe.',
+          'Aho umwirondoro wawe uhura n\'uw\'abandi — ubyara imiterere y\'ibihurira, ugaragaza imihuza ntawundi muri mwe yabonye wenyine — ibyo ni <span class="term-link" data-term="limning">sillage ivuza</span>. Umuntu ku giti cye ahinduka igitsina rusange. Ijwi rimwe rihinduka accord.'
+        ],
+        q: 'Resonance y\'ukuri si icyo usiga<br>ahubwo ni icyo gikomeza gukura<br>nyuma yaho wagiye.'
+      },
+      '5': {
+        h: 'Ikintu cyiza, ikintu kizima',
+        p: [
+          null,
+          'Kora ibintu bivuza. Tera imbuto mu nzira yawe. Resonance ikomeza ni iyo yatewe witonze igatunganywa mu gihe.'
+        ],
+        q: null
+      }
+    }
+  }
+};
+</script>
+<script src="i18n.js"></script>
+
+</body>
+</html>

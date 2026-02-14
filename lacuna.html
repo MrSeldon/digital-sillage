@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lacuna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFBF7;
+    --amber: #C4956A;
+    --deep-amber: #A67744;
+    --umber: #3D2B1F;
+    --deep-umber: #2A1D14;
+    --smoke: #8B7D6B;
+    --mist: #D4C9B8;
+    --blush: #E8D5C4;
+    --ink: #1A1210;
+    --faint: rgba(164, 119, 68, 0.08);
+    /* lacuna — twilight, negative space */
+    --void: #7B8A9E;
+    --deep-void: #4E5D73;
+    --absence: #A8B5C4;
+    --hollow: rgba(123, 138, 158, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--mist) transparent;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm-white);
+    color: var(--umber);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ====== WORD NAV ====== */
+  .word-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+    padding: 1.2rem 2rem;
+    background: rgba(253, 251, 247, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(123, 138, 158, 0.08);
+    transform: translateY(-100%);
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .word-nav.visible { transform: translateY(0); }
+
+  .word-nav::-webkit-scrollbar { display: none; }
+  .word-nav-item, .word-nav-dot { flex-shrink: 0; }
+
+  .word-nav-item {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+    color: var(--mist);
+    cursor: pointer;
+    transition: all 0.4s ease;
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 2px;
+  }
+
+  .word-nav-item:hover { color: var(--void); }
+  .word-nav-item.active { color: var(--deep-umber); }
+
+  .word-nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--void);
+  }
+
+  .word-nav-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--mist);
+    flex-shrink: 0;
+  }
+
+  /* ====== SCROLL PROGRESS ====== */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--void), var(--deep-void));
+    z-index: 1000;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* ====== NAV DOTS ====== */
+  .nav-dots {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .nav-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mist);
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+  }
+
+  .nav-dot.active {
+    background: var(--void);
+    transform: scale(1.6);
+  }
+
+  .nav-dot::after {
+    content: attr(data-label);
+    position: absolute;
+    right: 1.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .nav-dot:hover::after { opacity: 1; }
+
+  /* ====== SECTIONS ====== */
+  .section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem;
+    position: relative;
+  }
+
+  .section-inner {
+    max-width: 680px;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1),
+                transform 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .section-inner.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ====== HERO ====== */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 30%, #d0d8e2 0%, var(--warm-white) 60%);
+    z-index: 0;
+  }
+
+  .hero-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--void);
+    opacity: 0;
+    animation: drift 12s infinite ease-in-out;
+  }
+
+  @keyframes drift {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    20% { opacity: 0.08; }
+    50% { opacity: 0.04; transform: translate(var(--dx), var(--dy)) scale(1); }
+    80% { opacity: 0.06; }
+    100% { opacity: 0; transform: translate(var(--dx2), var(--dy2)) scale(0.3); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-word {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    color: var(--umber);
+    letter-spacing: 0.15em;
+    margin-bottom: 0.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .hero-pronunciation {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 1.1rem;
+    color: var(--smoke);
+    letter-spacing: 0.08em;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+
+  .speak-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.3rem;
+    border-radius: 50%;
+    transition: all 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .speak-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--mist);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.4s ease;
+  }
+
+  .speak-btn:hover svg { stroke: var(--void); }
+  .speak-btn.playing svg { stroke: var(--void); }
+
+  .hero-line {
+    width: 40px;
+    height: 1px;
+    background: var(--void);
+    margin: 0 auto 2.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .hero-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    color: var(--smoke);
+    line-height: 1.9;
+    max-width: 520px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeUp 2s 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    animation: fadeUp 2s 2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    z-index: 2;
+  }
+
+  .scroll-cue span {
+    display: block;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--void), transparent);
+    margin: 0 auto;
+    animation: pulse-line 2.5s infinite ease-in-out;
+  }
+
+  @keyframes pulse-line {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+    50% { opacity: 0.8; transform: scaleY(1); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(25px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ====== TYPOGRAPHY ====== */
+  h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    color: var(--deep-umber);
+    margin-bottom: 2rem;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+  }
+
+  .section-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--void);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  p {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 1.02rem;
+    line-height: 1.85;
+    color: var(--umber);
+    margin-bottom: 1.4rem;
+  }
+
+  p:last-child { margin-bottom: 0; }
+
+  .pullquote {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.3rem, 3vw, 1.7rem);
+    line-height: 1.6;
+    color: var(--deep-void);
+    padding: 2rem 0;
+    border-top: 1px solid var(--hollow);
+    border-bottom: 1px solid var(--hollow);
+    margin: 2.5rem 0;
+    text-align: center;
+  }
+
+  /* ====== DARK SECTION ====== */
+  .section-dark {
+    background: var(--deep-umber);
+    color: var(--cream);
+  }
+
+  .section-dark h2 { color: var(--blush); }
+  .section-dark p { color: var(--mist); }
+  .section-dark .section-label { color: var(--absence); }
+  .section-dark .pullquote {
+    color: var(--absence);
+    border-color: rgba(123, 138, 158, 0.15);
+  }
+  .section-dark .term-link {
+    color: inherit;
+    border-bottom-color: rgba(123, 138, 158, 0.15);
+  }
+  .section-dark .term-link:hover {
+    color: var(--absence);
+    border-bottom-color: rgba(123, 138, 158, 0.4);
+  }
+
+  /* ====== WARM SECTION ====== */
+  .section-warm {
+    background: var(--cream);
+  }
+
+  /* ====== VOID SECTION ====== */
+  .section-void {
+    background: #2C3340;
+    color: #d0d8e2;
+  }
+
+  .section-void h2 { color: #d0d8e2; }
+  .section-void p { color: #a8b5c4; }
+  .section-void .section-label { color: var(--absence); }
+  .section-void .pullquote {
+    color: var(--absence);
+    border-color: rgba(168, 181, 196, 0.15);
+  }
+  .section-void .term-link {
+    color: inherit;
+    border-bottom-color: rgba(168, 181, 196, 0.15);
+  }
+  .section-void .term-link:hover {
+    color: var(--absence);
+    border-bottom-color: rgba(168, 181, 196, 0.4);
+  }
+
+  /* ====== TERM LINKS ====== */
+  .term-link {
+    color: inherit;
+    border-bottom: 1px solid rgba(123, 138, 158, 0.12);
+    cursor: pointer;
+    transition: border-color 0.4s ease, color 0.4s ease;
+    position: relative;
+    text-decoration: none;
+  }
+
+  .term-link:hover {
+    color: var(--deep-void);
+    border-bottom-color: rgba(123, 138, 158, 0.4);
+  }
+
+  /* ====== TERM MODAL ====== */
+  .term-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 18, 16, 0.4);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .term-modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .term-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    z-index: 501;
+    background: var(--warm-white);
+    border: 1px solid rgba(123, 138, 158, 0.15);
+    border-radius: 3px;
+    max-width: 480px;
+    width: calc(100% - 3rem);
+    padding: 2.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .term-modal.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .term-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--mist);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    line-height: 1;
+  }
+
+  .term-modal-close:hover { color: var(--umber); }
+
+  .term-modal-word {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 1.6rem;
+    color: var(--deep-umber);
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.05em;
+  }
+
+  .term-modal-pron {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--smoke);
+    margin-bottom: 1.2rem;
+  }
+
+  .term-modal-def {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: var(--umber);
+    margin-bottom: 1.2rem;
+  }
+
+  .term-modal-connections {
+    border-top: 1px solid var(--faint);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .term-modal-connections-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--void);
+    margin-bottom: 0.6rem;
+    font-weight: 500;
+  }
+
+  .term-modal-connection {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: var(--smoke);
+    line-height: 1.7;
+    padding-left: 0.8rem;
+    border-left: 1px solid var(--faint);
+    margin-bottom: 0.5rem;
+  }
+
+  .term-modal-connection em {
+    color: var(--deep-void);
+    font-style: normal;
+  }
+
+  /* ====== FINALE ====== */
+  .finale {
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 50% 70%, #d0d8e2 0%, var(--warm-white) 50%);
+  }
+
+  .finale h2 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    margin-bottom: 1.5rem;
+  }
+
+  .finale p {
+    max-width: 520px;
+    text-align: center;
+  }
+
+  .finale-line {
+    width: 60px;
+    height: 1px;
+    background: var(--void);
+    margin: 2.5rem auto;
+  }
+
+  .finale-small {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    margin-top: 3rem;
+  }
+
+  /* ====== COLOPHON ====== */
+  .colophon {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--warm-white);
+  }
+
+  .colophon p {
+    font-size: 0.75rem;
+    color: var(--mist);
+    letter-spacing: 0.05em;
+  }
+
+  .colophon a {
+    color: var(--void);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+
+  .colophon a:hover { border-bottom-color: var(--void); }
+
+  /* ====== CANVAS ====== */
+  #scent-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.3;
+  }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 768px) {
+    .section { padding: 4rem 1.5rem; }
+    .nav-dots { right: 1rem; gap: 1rem; }
+    .nav-dot::after { display: none; }
+    .hero-word { letter-spacing: 0.08em; }
+    .word-nav { gap: 1.2rem; padding: 1rem 1.5rem; }
+    .word-nav-item { font-size: 0.82rem; letter-spacing: 0.06em; }
+  }
+
+  @media (max-width: 480px) {
+    .section { padding: 3rem 1.2rem; }
+    .nav-dots { display: none; }
+    .word-nav { gap: 0.8rem; }
+    .word-nav-item { font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<canvas id="scent-canvas"></canvas>
+
+<!-- ====== WORD NAV ====== -->
+<nav class="word-nav" id="wordNav">
+  <a class="word-nav-item" data-word="sillage" href="/">sillage</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="apapachar" href="apapachar.html">apapachar</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ecotone" href="ecotone.html">ecotone</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="crown-shyness" href="crown-shyness.html">crown shyness</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item active" data-word="lacuna">lacuna</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="centripetal" href="centripetal.html">centripetal</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="limning" href="limning.html">limning</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="nepantla" href="nepantla.html">nepantla</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ollin" href="ollin.html">ollin</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="resonance" href="resonance.html">resonance</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="igitwenge" href="igitwenge.html">igitwenge</a>
+</nav>
+
+<!-- ====== NAV DOTS ====== -->
+<nav class="nav-dots" id="navDots">
+  <div class="nav-dot active" data-section="0" data-label="Lacuna"></div>
+  <div class="nav-dot" data-section="1" data-label="The Absence"></div>
+  <div class="nav-dot" data-section="2" data-label="The Shaped Void"></div>
+  <div class="nav-dot" data-section="3" data-label="Dual Instruments"></div>
+  <div class="nav-dot" data-section="4" data-label="The Deepest Noticing"></div>
+</nav>
+
+<!-- ====== TERM MODAL ====== -->
+<div class="term-modal-overlay" id="termOverlay"></div>
+<div class="term-modal" id="termModal">
+  <button class="term-modal-close" id="termClose">&times;</button>
+  <div class="term-modal-word" id="termWord"></div>
+  <div class="term-modal-pron" id="termPron"></div>
+  <div class="term-modal-def" id="termDef"></div>
+  <div class="term-modal-connections" id="termConnections">
+    <div class="term-modal-connections-label">Resonances</div>
+    <div id="termConnectionsList"></div>
+  </div>
+</div>
+
+
+<!-- ======== HERO ======== -->
+<section class="hero section" data-index="0">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-content">
+    <div class="hero-word">lacuna</div>
+    <div class="hero-pronunciation">
+      /l&#601;&#712;kju&#720;n&#601;/ &#8212; Latin, noun
+      <button class="speak-btn" id="speakBtn" aria-label="Hear pronunciation">
+        <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+      </button>
+    </div>
+    <div class="hero-line"></div>
+    <div class="hero-subtitle">
+      A gap, an absence, a missing piece.<br>
+      Conspicuously obvious in its absence.<br>
+      The shape of what isn't there.
+    </div>
+  </div>
+  <div class="scroll-cue"><span></span></div>
+</section>
+
+
+<!-- ======== I. THE ABSENCE ======== -->
+<section class="section" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">I</div>
+    <h2>Conspicuously obvious in its absence</h2>
+    <p>You read a passage in a book and clearly a paragraph is missing, or a page isn't there. The context makes its absence conspicuous because it interrupts. The continuity breaks, and the break itself becomes the loudest thing on the page.</p>
+
+    <p>That's lacuna. Not just any absence &#8212; a <em>shaped</em> absence. One whose contours are defined by everything around it. A missing tooth. A redacted line. The silence in a conversation where a truth should have been. The gap isn't invisible. It's the most visible thing in the room.</p>
+
+    <div class="pullquote">
+      Not the thing that's missing,<br>
+      but the shape of the missing thing &#8212;<br>
+      revealed by everything that remains.
+    </div>
+
+    <p>Latin <em>lacuna</em> &#8212; a pit, a hollow, a pool. From <em>lacus</em>, lake. A body of water defined entirely by the land around it. The word carries its own metaphor: a void that takes its shape from what contains it.</p>
+  </div>
+</section>
+
+
+<!-- ======== II. THE SHAPED VOID ======== -->
+<section class="section section-void" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">II</div>
+    <h2>The Gestalt opposite</h2>
+    <p>There's a concept that lives in the negative space of <span class="term-link" data-term="sillage">sillage</span>. Where sillage reads the trace of what was there &#8212; the scent that lingers, the wake that persists &#8212; lacuna reads the shape of what's missing. The same boundary, sensed from the other side.</p>
+
+    <p>Think of a Gestalt figure. The vase and the faces. You can see the object, or you can see the space around it. Both describe the same contour. Sillage is the face; lacuna is the space between the faces. Complementary instruments <span class="term-link" data-term="limning">limning</span> the same edge from both sides.</p>
+
+    <div class="pullquote">
+      Sillage reads the trace of what was there.<br>
+      Lacuna reads the shape of what's missing.<br>
+      Together they limn the same edge from both sides.
+    </div>
+
+    <p>An empty room with a hint that someone was there. Sillage is what makes that absence legible through sensation &#8212; through one of the senses. Lacuna is the shape of the absence itself. One reaches toward what was; the other maps what isn't.</p>
+  </div>
+</section>
+
+
+<!-- ======== III. DUAL INSTRUMENTS ======== -->
+<section class="section section-warm" data-index="3">
+  <div class="section-inner">
+    <div class="section-label">III</div>
+    <h2>Sillage and lacuna as dual instruments</h2>
+    <p>Every document, every recording, every conversation has a sillage &#8212; the traces of what was in the original that didn't make it into the copy. And every compression has a lacuna &#8212; the shaped absence where meaning used to be.</p>
+
+    <p>The loss &#8212; the zero in the zero-one of digital, the off-moment, the little triangle below the curve when you differentiate in calculus &#8212; that absence is itself a contour you can study. You can trace the boundary of what was lost by examining what remains, the same way a Gestalt figure reveals its hidden shape through the space around it.</p>
+
+    <p>You're studying the same boundary &#8212; the <span class="term-link" data-term="ecotone">ecotone</span> of meaning &#8212; but through the absences rather than the presences. This is <span class="term-link" data-term="dual-origin">dual-origin verification</span> applied to meaning itself: two instruments approaching the same contour from opposite sides, arriving at the same line.</p>
+
+    <div class="pullquote">
+      Every compression has a sillage &#8212;<br>
+      traces of the original that didn't survive.<br>
+      And every compression has a lacuna &#8212;<br>
+      the shaped absence where meaning used to be.
+    </div>
+  </div>
+</section>
+
+
+<!-- ======== IV. THE DEEPEST NOTICING ======== -->
+<section class="finale section" data-index="4">
+  <div class="section-inner" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="section-label">IV</div>
+    <h2>The deepest form of noticing</h2>
+    <p>Being aware of both &#8212; the trace and the void, the sillage and the lacuna &#8212; is the deepest form of the noticing practice. Not just sensing what's there, but attending to the shape of what isn't. Reading the room and reading the silences. Hearing the notes and hearing the rests.</p>
+
+    <p>The interruption is the key. Lacuna isn't passive emptiness &#8212; it disrupts. It breaks the continuity and demands attention. The missing page doesn't whisper; it announces itself through the very incoherence it creates. And in that announcement, it teaches you something no intact text could: what mattered enough to leave a hole when it vanished.</p>
+
+    <div class="finale-line"></div>
+
+    <p>The silences between the notes. The space between the canopies. The shaped void where meaning used to be.</p>
+
+    <p style="margin-top: 1.5rem; font-style: italic; font-family: 'Cormorant Garamond', serif; color: var(--smoke); font-size: 0.95rem;">What's missing tells you as much as what remains.<br>The absence has a shape.</p>
+
+    <div class="finale-small">digitalsillage.com</div>
+  </div>
+</section>
+
+<footer class="colophon">
+  <p style="font-size: 0.65rem; color: var(--mist); letter-spacing: 0.12em; margin-bottom: 0.8rem;">muse bear inspired</p>
+  <p><a href="https://room527.com" target="_blank">Room 527</a> &#183; 2026</p>
+</footer>
+
+
+<script>
+// ====== TERM DEFINITIONS ======
+var terms = {
+  'sillage': {
+    word: 'sillage',
+    pron: '/si\u02d0\u02c8j\u0251\u02d0\u0292/ \u2014 French, noun',
+    def: 'The wafting trail that lingers as you pass through. The wake of a vessel. The carved line through powder. The presence we can still sense in spite of its absence. Sillage is the intersection between our sphere of awareness and presence receding in time. The temporal shadow. Where lacuna maps the void, sillage traces the lingering.',
+    connections: [
+      { label: 'Lacuna \u00a7 II', text: 'Sillage and lacuna as the face and the space between the faces \u2014 same contour, opposite sides' },
+      { label: 'Lacuna \u00a7 III', text: 'Every compression has both a sillage and a lacuna' }
+    ]
+  },
+  'limning': {
+    word: 'limning',
+    pron: '/\u02c8l\u026am\u026a\u014b/ \u2014 from Latin luminare, \u201cto illuminate\u201d',
+    def: 'Reaching out to fill all the little pieces, to probe all the edges, to get the highest resolution at the boundary. Together, sillage and lacuna are complementary instruments limning the same edge from both sides \u2014 one through presence, one through absence.',
+    connections: [
+      { label: 'Lacuna \u00a7 II', text: 'Complementary instruments limning the same edge from both sides' },
+      { label: 'Ecotone', text: 'Both systems limning outward from their interiors, arriving at matching boundaries' }
+    ]
+  },
+  'ecotone': {
+    word: 'ecotone',
+    pron: '/\u02c8i\u02d0k\u0259\u02ccto\u028an/ \u2014 from Greek oikos + tonos',
+    def: 'The transition zone between two adjacent biomes. In the context of lacuna: the ecotone of meaning \u2014 the boundary between what survived compression and what was lost. You can study this boundary through the presences (sillage) or through the absences (lacuna).',
+    connections: [
+      { label: 'Lacuna \u00a7 III', text: 'The ecotone of meaning \u2014 studied through absences rather than presences' },
+      { label: 'Crown shyness', text: 'The gap in the canopy as both lacuna (absence) and ecotone (richest zone)' }
+    ]
+  },
+  'dual-origin': {
+    word: 'dual-origin verification',
+    pron: '',
+    def: 'The most powerful signal that a boundary is correct is when both systems describe it independently and arrive at the same line. Sillage and lacuna are dual-origin verification applied to meaning: two instruments approaching the same contour from opposite sides. If the trace of what remained and the shape of what was lost describe the same edge, the boundary is verified.',
+    connections: [
+      { label: 'Lacuna \u00a7 III', text: 'Dual-origin verification applied to meaning itself' },
+      { label: 'Ecotone', text: 'Both sides tracing the edge, converging on the same contour' }
+    ]
+  }
+};
+
+// ====== TERM MODAL LOGIC ======
+var overlay = document.getElementById('termOverlay');
+var modal = document.getElementById('termModal');
+var termWordEl = document.getElementById('termWord');
+var termPronEl = document.getElementById('termPron');
+var termDefEl = document.getElementById('termDef');
+var termConnectionsListEl = document.getElementById('termConnectionsList');
+var termConnectionsEl = document.getElementById('termConnections');
+
+function openTerm(key) {
+  var t = terms[key];
+  if (!t) return;
+  termWordEl.textContent = t.word;
+  termPronEl.textContent = t.pron;
+  termPronEl.style.display = t.pron ? 'block' : 'none';
+  termDefEl.textContent = t.def;
+  termConnectionsListEl.innerHTML = '';
+  if (t.connections && t.connections.length) {
+    termConnectionsEl.style.display = 'block';
+    t.connections.forEach(function(c) {
+      var div = document.createElement('div');
+      div.className = 'term-modal-connection';
+      div.innerHTML = '<em>' + c.label + '</em> \u2014 ' + c.text;
+      termConnectionsListEl.appendChild(div);
+    });
+  } else {
+    termConnectionsEl.style.display = 'none';
+  }
+  overlay.classList.add('active');
+  modal.classList.add('active');
+}
+
+function closeTerm() {
+  overlay.classList.remove('active');
+  modal.classList.remove('active');
+}
+
+overlay.addEventListener('click', closeTerm);
+document.getElementById('termClose').addEventListener('click', closeTerm);
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeTerm(); });
+
+document.querySelectorAll('.term-link').forEach(function(el) {
+  el.addEventListener('click', function(e) {
+    e.preventDefault();
+    openTerm(el.dataset.term);
+  });
+});
+
+// ====== SCROLL PROGRESS ======
+var progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', function() {
+  var scrollTop = window.scrollY;
+  var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (scrollTop / docHeight * 100) + '%';
+});
+
+// ====== WORD NAV ======
+var wordNav = document.getElementById('wordNav');
+window.addEventListener('scroll', function() {
+  if (window.scrollY > window.innerHeight * 0.6) {
+    wordNav.classList.add('visible');
+  } else {
+    wordNav.classList.remove('visible');
+  }
+});
+
+// ====== SECTION REVEAL ======
+var revealObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+document.querySelectorAll('.section-inner').forEach(function(el) { revealObserver.observe(el); });
+
+// ====== NAV DOTS ======
+var sections = document.querySelectorAll('.section');
+var dots = document.querySelectorAll('.nav-dot');
+
+var sectionObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting) {
+      var index = entry.target.dataset.index;
+      dots.forEach(function(d) { d.classList.remove('active'); });
+      if (dots[index]) dots[index].classList.add('active');
+    }
+  });
+}, { threshold: 0.4 });
+
+sections.forEach(function(s) { sectionObserver.observe(s); });
+
+dots.forEach(function(dot) {
+  dot.addEventListener('click', function() {
+    var idx = dot.dataset.section;
+    if (sections[idx]) sections[idx].scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// ====== HERO PARTICLES ======
+var particleContainer = document.getElementById('heroParticles');
+for (var i = 0; i < 18; i++) {
+  var p = document.createElement('div');
+  p.className = 'particle';
+  var size = 3 + Math.random() * 8;
+  p.style.width = size + 'px';
+  p.style.height = size + 'px';
+  p.style.left = (10 + Math.random() * 80) + '%';
+  p.style.top = (10 + Math.random() * 80) + '%';
+  p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dy', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dx2', (Math.random() * 120 - 60) + 'px');
+  p.style.setProperty('--dy2', (Math.random() * 120 - 60) + 'px');
+  p.style.animationDelay = (Math.random() * 10) + 's';
+  p.style.animationDuration = (8 + Math.random() * 8) + 's';
+  particleContainer.appendChild(p);
+}
+
+// ====== AMBIENT CANVAS ======
+var canvas = document.getElementById('scent-canvas');
+var ctx = canvas.getContext('2d');
+var w, h;
+var trails = [];
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+function Trail() { this.reset(); }
+Trail.prototype.reset = function() {
+  this.x = Math.random() * w;
+  this.y = Math.random() * h;
+  this.vx = (Math.random() - 0.5) * 0.2;
+  this.vy = (Math.random() - 0.5) * 0.2;
+  this.life = 0;
+  this.maxLife = 400 + Math.random() * 400;
+  this.radius = 80 + Math.random() * 120;
+};
+Trail.prototype.update = function() {
+  this.x += this.vx;
+  this.y += this.vy;
+  this.life++;
+  if (this.life > this.maxLife) this.reset();
+};
+Trail.prototype.draw = function() {
+  var progress = this.life / this.maxLife;
+  var alpha = Math.sin(progress * Math.PI) * 0.018;
+  var gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+  gradient.addColorStop(0, 'rgba(123, 138, 158, ' + alpha + ')');
+  gradient.addColorStop(1, 'rgba(123, 138, 158, 0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+};
+
+for (var j = 0; j < 5; j++) {
+  var t = new Trail();
+  t.life = Math.random() * t.maxLife;
+  trails.push(t);
+}
+
+function animate() {
+  ctx.clearRect(0, 0, w, h);
+  trails.forEach(function(t) { t.update(); t.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+
+// ====== PRONUNCIATION BUTTON ======
+document.getElementById('speakBtn').addEventListener('click', function() {
+  var btn = this;
+  btn.classList.add('playing');
+  var audio = new Audio('audio/lacuna.mp3');
+  audio.addEventListener('canplaythrough', function() { audio.play(); });
+  audio.addEventListener('ended', function() { btn.classList.remove('playing'); });
+  audio.addEventListener('error', function() {
+    var utterance = new SpeechSynthesisUtterance('lacuna');
+    utterance.lang = 'en-US';
+    utterance.rate = 0.75;
+    utterance.pitch = 1;
+    utterance.onend = function() { btn.classList.remove('playing'); };
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  });
+});
+
+// Auto-scroll active word into view in nav
+var wordNav = document.getElementById('wordNav');
+var activeWord = wordNav && wordNav.querySelector('.word-nav-item.active');
+if (activeWord) {
+  setTimeout(function() {
+    activeWord.scrollIntoView({ inline: 'center', block: 'nearest' });
+  }, 100);
+}
+</script>
+
+<script>
+window.pageTranslations = {
+  es: {
+    heroSubtitle: 'Un vac\u00edo, una ausencia, una pieza que falta.<br>Conspicuamente obvia en su ausencia.<br>La forma de lo que no est\u00e1.',
+    sections: {
+      '1': {
+        h: 'Conspicuamente obvia en su ausencia',
+        p: [
+          'Lees un pasaje en un libro y claramente falta un p\u00e1rrafo, o una p\u00e1gina no est\u00e1. El contexto hace conspicua su ausencia porque interrumpe. La continuidad se quiebra, y la ruptura misma se convierte en lo m\u00e1s ruidoso de la p\u00e1gina.',
+          'Eso es lacuna. No cualquier ausencia \u2014 una ausencia con <em>forma</em>. Una cuyos contornos est\u00e1n definidos por todo lo que la rodea. Un diente que falta. Una l\u00ednea censurada. El silencio en una conversaci\u00f3n donde deber\u00eda haber habido una verdad. El vac\u00edo no es invisible. Es lo m\u00e1s visible de la habitaci\u00f3n.',
+          'Del lat\u00edn <em>lacuna</em> \u2014 un pozo, un hueco, una charca. De <em>lacus</em>, lago. Un cuerpo de agua definido enteramente por la tierra que lo rodea. La palabra lleva su propia met\u00e1fora: un vac\u00edo que toma su forma de lo que lo contiene.'
+        ],
+        q: 'No la cosa que falta,<br>sino la forma de la cosa ausente \u2014<br>revelada por todo lo que permanece.'
+      },
+      '2': {
+        h: 'El opuesto Gestalt',
+        p: [
+          'Hay un concepto que habita en el espacio negativo de <span class="term-link" data-term="sillage">sillage</span>. Donde sillage lee la huella de lo que estuvo \u2014 el aroma que perdura, la estela que persiste \u2014 lacuna lee la forma de lo que falta. El mismo l\u00edmite, percibido desde el otro lado.',
+          'Piensa en una figura de Gestalt. El jarr\u00f3n y los rostros. Puedes ver el objeto, o puedes ver el espacio a su alrededor. Ambos describen el mismo contorno. Sillage es el rostro; lacuna es el espacio entre los rostros. Instrumentos complementarios que <span class="term-link" data-term="limning">delinean</span> el mismo borde desde ambos lados.',
+          'Una habitaci\u00f3n vac\u00eda con un indicio de que alguien estuvo all\u00ed. Sillage es lo que hace legible esa ausencia a trav\u00e9s de la sensaci\u00f3n \u2014 a trav\u00e9s de uno de los sentidos. Lacuna es la forma de la ausencia misma. Uno se extiende hacia lo que fue; el otro cartograf\u00eda lo que no es.'
+        ],
+        q: 'Sillage lee la huella de lo que estuvo.<br>Lacuna lee la forma de lo que falta.<br>Juntos delinean el mismo borde desde ambos lados.'
+      },
+      '3': {
+        h: 'Sillage y lacuna como instrumentos duales',
+        p: [
+          'Cada documento, cada grabaci\u00f3n, cada conversaci\u00f3n tiene un sillage \u2014 las huellas de lo que hab\u00eda en el original y no lleg\u00f3 a la copia. Y cada compresi\u00f3n tiene una lacuna \u2014 la ausencia con forma donde sol\u00eda estar el significado.',
+          'La p\u00e9rdida \u2014 el cero en el cero-uno de lo digital, el momento apagado, el peque\u00f1o tri\u00e1ngulo bajo la curva cuando diferencias en c\u00e1lculo \u2014 esa ausencia es en s\u00ed misma un contorno que puedes estudiar. Puedes trazar el l\u00edmite de lo que se perdi\u00f3 examinando lo que queda, del mismo modo que una figura de Gestalt revela su forma oculta a trav\u00e9s del espacio que la rodea.',
+          'Est\u00e1s estudiando el mismo l\u00edmite \u2014 el <span class="term-link" data-term="ecotone">ecotono</span> del significado \u2014 pero a trav\u00e9s de las ausencias en lugar de las presencias. Esto es la <span class="term-link" data-term="dual-origin">verificaci\u00f3n de origen dual</span> aplicada al significado mismo: dos instrumentos que se aproximan al mismo contorno desde lados opuestos, llegando a la misma l\u00ednea.'
+        ],
+        q: 'Cada compresi\u00f3n tiene un sillage \u2014<br>huellas del original que no sobrevivieron.<br>Y cada compresi\u00f3n tiene una lacuna \u2014<br>la ausencia con forma donde sol\u00eda estar el significado.'
+      },
+      '4': {
+        h: 'La forma m\u00e1s profunda de atenci\u00f3n',
+        p: [
+          'Ser consciente de ambos \u2014 la huella y el vac\u00edo, el sillage y la lacuna \u2014 es la forma m\u00e1s profunda de la pr\u00e1ctica de atenci\u00f3n. No solo percibir lo que est\u00e1, sino atender a la forma de lo que no est\u00e1. Leer la habitaci\u00f3n y leer los silencios. Escuchar las notas y escuchar las pausas.',
+          'La interrupci\u00f3n es la clave. Lacuna no es vac\u00edo pasivo \u2014 irrumpe. Quiebra la continuidad y exige atenci\u00f3n. La p\u00e1gina que falta no susurra; se anuncia a trav\u00e9s de la misma incoherencia que crea. Y en ese anuncio, te ense\u00f1a algo que ning\u00fan texto intacto podr\u00eda: qu\u00e9 importaba lo suficiente como para dejar un hueco cuando desapareci\u00f3.',
+          'Los silencios entre las notas. El espacio entre las copas de los \u00e1rboles. El vac\u00edo con forma donde sol\u00eda estar el significado.',
+          'Lo que falta te dice tanto como lo que permanece.<br>La ausencia tiene forma.'
+        ],
+        q: null
+      }
+    }
+  },
+  rw: {
+    heroSubtitle: 'Umwanya, ubusa, igice kidahari.<br>Bigaragara cyane mu kubura kwabyo.<br>Ishusho y\u2019icyo kitariho.',
+    sections: {
+      '1': {
+        h: 'Bigaragara cyane mu kubura kwabyo',
+        p: [
+          'Usoma interuro mu gitabo ukamenya neza ko hari umurongo udahari, cyangwa urupapuro rutahari. Imimerere ituma ubusa bwayo bugaragara kuko buhagarika. Gukomeza birashira, kandi ikimenyetso cy\u2019ikivugo cyabwo kibera ari icyo cyumvikana cyane ku rupapuro.',
+          'Ibyo ni lacuna. Si ubusa ubwo ari bwo bwose \u2014 ni ubusa bufite <em>ishusho</em>. Ubusa imbibi zabwo zisobanurwa n\u2019ibintu byose bibuzengurutse. Iryinyo ridahari. Umurongo wasibwe. Guceceka mu kiganiro aho ukuri kwagombye kubaho. Umwanya w\u2019ubusa si utaboneka. Ni wo uboneka cyane mu cyumba.',
+          'Mu kilatini <em>lacuna</em> \u2014 umwobo, ubusa, ikidendezi. Bivuye muri <em>lacus</em>, ikiyaga. Amazi asobanurwa gusa n\u2019ubutaka bubizengurutse. Ijambo ririmo ikigereranyo cyaryo: ubusa bufata ishusho y\u2019icyo kibuzengurutse.'
+        ],
+        q: 'Si ikintu kidahari,<br>ahubwo ni ishusho y\u2019ikintu kidahari \u2014<br>igaragazwa n\u2019ibintu byose bisigaye.'
+      },
+      '2': {
+        h: 'Ikinyuranyo cya Gestalt',
+        p: [
+          'Hari igitekerezo kiba mu mwanya wa negativu wa <span class="term-link" data-term="sillage">sillage</span>. Aho sillage isoma ikimenyetso cy\u2019icyariho \u2014 impumuro isigaye, umuyonga ukomeza \u2014 lacuna isoma ishusho y\u2019icyo kidahari. Urubibe rumwe, rumenyekana ku rundi ruhande.',
+          'Tekereza ishusho ya Gestalt. Icyupa n\u2019mu maso. Ushobora kubona ikintu, cyangwa ukabona umwanya ukizengurutse. Byombi bisobanura imbibi zimwe. Sillage ni mu maso; lacuna ni umwanya uri hagati y\u2019amaso. Ibikoresho bisuzumanye <span class="term-link" data-term="limning">bisenga</span> urubibe rumwe ku mpande zombi.',
+          'Icyumba kiri ubusa gifite ikimenyetso ko umuntu yarahabye. Sillage ni cyo gituma ubwo kubura gusomeka binyuze mu kumva \u2014 binyuze mu kamwe mu bisobanuro by\u2019imyumvire. Lacuna ni ishusho y\u2019ubusa ubwabwo. Kimwe gishaka icyariho; ikindi gishushanya icyo kitariho.'
+        ],
+        q: 'Sillage isoma ikimenyetso cy\u2019icyariho.<br>Lacuna isoma ishusho y\u2019icyo kidahari.<br>Hamwe bisenga urubibe rumwe ku mpande zombi.'
+      },
+      '3': {
+        h: 'Sillage na lacuna nk\u2019ibikoresho bibiri',
+        p: [
+          'Buri nyandiko, buri cyanditswe, buri kiganiro gifite sillage \u2014 ibimenyetso by\u2019icyari mu nyandiko y\u2019umwimerere kitageraga mu kopi. Kandi buri gukata bifite lacuna \u2014 ubusa bufite ishusho aho icyo bisobanura cyahoze.',
+          'Igihombo \u2014 zeru mu zeru-rimwe rya numerike, akanya k\u2019amajwi, agace gato ka tiriyangulo munsi y\u2019umurongo iyo ukora calculus \u2014 ubwo busa ni bwo ubwabwo imbibi ushobora kwiga. Ushobora gukurikirana urubibe rw\u2019icyo cyatakaye ugenzura icyo gisigaye, nk\u2019uko ishusho ya Gestalt igaragaza ishusho yayo ihishwe binyuze mu mwanya uyizengurutse.',
+          'Uri kwiga urubibe rumwe \u2014 <span class="term-link" data-term="ecotone">ecotone</span> y\u2019icyo bisobanura \u2014 ariko binyuze mu busa aho kuba mu bihari. Ibi ni <span class="term-link" data-term="dual-origin">igenzura ry\u2019inkomoko ebyiri</span> rishyirwa ku cyo bisobanura ubwacyo: ibikoresho bibiri bigana imbibi zimwe bivuye ku mpande zitandukanye, bigera ku murongo umwe.'
+        ],
+        q: 'Buri gukata bifite sillage \u2014<br>ibimenyetso by\u2019umwimerere bitarokotse.<br>Kandi buri gukata bifite lacuna \u2014<br>ubusa bufite ishusho aho icyo bisobanura cyahoze.'
+      },
+      '4': {
+        h: 'Uburyo bwo kwitegereza burusha ubundi bwose',
+        p: [
+          'Kumenya byombi \u2014 ikimenyetso n\u2019ubusa, sillage na lacuna \u2014 ni bwo buryo bwo kwitegereza burusha ubundi bwose. Si ukumva gusa icyo kihari, ahubwo ni ugutega amatwi ishusho y\u2019icyo kitariho. Gusoma icyumba no gusoma amaceceka. Kumva amanota no kumva ikiruhuko cy\u2019amanota.',
+          'Guhagarika ni bwo bwicanyi. Lacuna si ubusa butagira imbaraga \u2014 busenya. Buhagarika gukomeza kandi busaba kwitegereza. Urupapuro rudahari ntiruvugira buhoro; rwimenyekanisha binyuze mu kutumvikana ubwayo rutera. Kandi muri ubwo kwimenyekanisha, rugukurira icyo nta nyandiko yuzuye yakubwira: icyo cyari ingenzi bihagije kugira ngo gisige umwobo igihe cyashiraga.',
+          'Amaceceka ari hagati y\u2019amanota. Umwanya uri hagati y\u2019amashami y\u2019ibiti. Ubusa bufite ishusho aho icyo bisobanura cyahoze.',
+          'Icyo kidahari kikubwira nk\u2019icyo gisigaye.<br>Ubusa bufite ishusho.'
+        ],
+        q: null
+      }
+    }
+  }
+};
+</script>
+<script src="i18n.js"></script>
+
+</body>
+</html>
