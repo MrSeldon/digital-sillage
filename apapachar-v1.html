@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apapachar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #F5F0E8;
+    --warm-white: #FDFBF7;
+    --amber: #C4956A;
+    --deep-amber: #A67744;
+    --umber: #3D2B1F;
+    --deep-umber: #2A1D14;
+    --smoke: #8B7D6B;
+    --mist: #D4C9B8;
+    --blush: #E8D5C4;
+    --ink: #1A1210;
+    --faint: rgba(164, 119, 68, 0.08);
+    /* apapachar — earth, terracotta, warmth */
+    --tierra: #B4724A;
+    --deep-tierra: #8C5533;
+    --clay: #C9967A;
+    --hearth: rgba(180, 114, 74, 0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: var(--mist) transparent;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--warm-white);
+    color: var(--umber);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ====== WORD NAV ====== */
+  .word-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+    padding: 1.2rem 2rem;
+    background: rgba(253, 251, 247, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(180, 114, 74, 0.08);
+    transform: translateY(-100%);
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .word-nav.visible { transform: translateY(0); }
+
+  .word-nav-item {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+    color: var(--mist);
+    cursor: pointer;
+    transition: all 0.4s ease;
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 2px;
+  }
+
+  .word-nav-item:hover { color: var(--tierra); }
+
+  .word-nav-item.active { color: var(--deep-umber); }
+
+  .word-nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--tierra);
+  }
+
+  .word-nav-item.upcoming {
+    opacity: 0.35;
+    cursor: default;
+    font-style: italic;
+  }
+
+  .word-nav-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--mist);
+    flex-shrink: 0;
+  }
+
+  /* ====== SCROLL PROGRESS ====== */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--tierra), var(--deep-tierra));
+    z-index: 1000;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* ====== NAV DOTS ====== */
+  .nav-dots {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .nav-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mist);
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    position: relative;
+  }
+
+  .nav-dot.active {
+    background: var(--tierra);
+    transform: scale(1.6);
+  }
+
+  .nav-dot::after {
+    content: attr(data-label);
+    position: absolute;
+    right: 1.4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .nav-dot:hover::after { opacity: 1; }
+
+  /* ====== SECTIONS ====== */
+  .section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 2rem;
+    position: relative;
+  }
+
+  .section-inner {
+    max-width: 680px;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 1.2s cubic-bezier(0.23, 1, 0.32, 1),
+                transform 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .section-inner.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ====== HERO ====== */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 30%, #e8d5c4 0%, var(--warm-white) 60%);
+    z-index: 0;
+  }
+
+  .hero-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--tierra);
+    opacity: 0;
+    animation: drift 12s infinite ease-in-out;
+  }
+
+  @keyframes drift {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    20% { opacity: 0.1; }
+    50% { opacity: 0.05; transform: translate(var(--dx), var(--dy)) scale(1); }
+    80% { opacity: 0.08; }
+    100% { opacity: 0; transform: translate(var(--dx2), var(--dy2)) scale(0.3); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .hero-word {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    color: var(--umber);
+    letter-spacing: 0.15em;
+    margin-bottom: 0.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .hero-pronunciation {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 1.1rem;
+    color: var(--smoke);
+    letter-spacing: 0.08em;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .hero-line {
+    width: 40px;
+    height: 1px;
+    background: var(--tierra);
+    margin: 0 auto 2.5rem;
+    opacity: 0;
+    animation: fadeUp 2s 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .hero-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: clamp(1.05rem, 2vw, 1.25rem);
+    color: var(--smoke);
+    line-height: 1.9;
+    max-width: 520px;
+    margin: 0 auto;
+    opacity: 0;
+    animation: fadeUp 2s 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  }
+
+  .scroll-cue {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    animation: fadeUp 2s 2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    z-index: 2;
+  }
+
+  .scroll-cue span {
+    display: block;
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--tierra), transparent);
+    margin: 0 auto;
+    animation: pulse-line 2.5s infinite ease-in-out;
+  }
+
+  @keyframes pulse-line {
+    0%, 100% { opacity: 0.3; transform: scaleY(0.6); }
+    50% { opacity: 0.8; transform: scaleY(1); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(25px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ====== TYPOGRAPHY ====== */
+  h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    color: var(--deep-umber);
+    margin-bottom: 2rem;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+  }
+
+  .section-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--tierra);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  p {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 1.02rem;
+    line-height: 1.85;
+    color: var(--umber);
+    margin-bottom: 1.4rem;
+  }
+
+  p:last-child { margin-bottom: 0; }
+
+  .pullquote {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.3rem, 3vw, 1.7rem);
+    line-height: 1.6;
+    color: var(--deep-tierra);
+    padding: 2rem 0;
+    border-top: 1px solid var(--hearth);
+    border-bottom: 1px solid var(--hearth);
+    margin: 2.5rem 0;
+    text-align: center;
+  }
+
+  /* ====== ETYMOLOGY CARDS ====== */
+  .etymology-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin: 2.5rem 0;
+  }
+
+  .etymology-card {
+    padding: 1.8rem;
+    border-radius: 2px;
+    background: var(--hearth);
+    border-left: 2px solid var(--tierra);
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+
+  .etymology-card.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .etymology-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
+    font-size: 1.15rem;
+    color: var(--deep-tierra);
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.03em;
+  }
+
+  .etymology-card p {
+    font-size: 0.92rem;
+    margin-bottom: 0;
+    color: var(--smoke);
+  }
+
+  /* ====== DARK SECTION ====== */
+  .section-dark {
+    background: var(--deep-umber);
+    color: var(--cream);
+  }
+
+  .section-dark h2 { color: var(--blush); }
+  .section-dark p { color: var(--mist); }
+  .section-dark .section-label { color: var(--clay); }
+  .section-dark .pullquote {
+    color: var(--clay);
+    border-color: rgba(180, 114, 74, 0.15);
+  }
+
+  /* ====== WARM SECTION ====== */
+  .section-warm {
+    background: var(--cream);
+  }
+
+  /* ====== TIERRA SECTION ====== */
+  .section-tierra {
+    background: #3B2A20;
+    color: #e8d5c4;
+  }
+
+  .section-tierra h2 { color: #e8d5c4; }
+  .section-tierra p { color: #c9967a; }
+  .section-tierra .section-label { color: var(--clay); }
+  .section-tierra .pullquote {
+    color: var(--clay);
+    border-color: rgba(201, 150, 122, 0.15);
+  }
+
+  /* ====== TERM LINKS ====== */
+  .term-link {
+    color: inherit;
+    border-bottom: 1px solid rgba(180, 114, 74, 0.12);
+    cursor: pointer;
+    transition: border-color 0.4s ease, color 0.4s ease;
+    position: relative;
+    text-decoration: none;
+  }
+
+  .term-link:hover {
+    color: var(--deep-tierra);
+    border-bottom-color: rgba(180, 114, 74, 0.4);
+  }
+
+  /* ====== TERM MODAL ====== */
+  .term-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 18, 16, 0.4);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .term-modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .term-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    z-index: 501;
+    background: var(--warm-white);
+    border: 1px solid rgba(180, 114, 74, 0.15);
+    border-radius: 3px;
+    max-width: 480px;
+    width: calc(100% - 3rem);
+    padding: 2.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .term-modal.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .term-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1.2rem;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--mist);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    line-height: 1;
+  }
+
+  .term-modal-close:hover { color: var(--umber); }
+
+  .term-modal-word {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 1.6rem;
+    color: var(--deep-umber);
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.05em;
+  }
+
+  .term-modal-pron {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--smoke);
+    margin-bottom: 1.2rem;
+  }
+
+  .term-modal-def {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: var(--umber);
+    margin-bottom: 1.2rem;
+  }
+
+  .term-modal-connections {
+    border-top: 1px solid var(--faint);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .term-modal-connections-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--tierra);
+    margin-bottom: 0.6rem;
+    font-weight: 500;
+  }
+
+  .term-modal-connection {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: var(--smoke);
+    line-height: 1.7;
+    padding-left: 0.8rem;
+    border-left: 1px solid var(--faint);
+    margin-bottom: 0.5rem;
+  }
+
+  .term-modal-connection em {
+    color: var(--deep-tierra);
+    font-style: normal;
+  }
+
+  /* ====== FINALE ====== */
+  .finale {
+    text-align: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 50% 70%, #e8d5c4 0%, var(--warm-white) 50%);
+  }
+
+  .finale h2 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    margin-bottom: 1.5rem;
+  }
+
+  .finale p {
+    max-width: 520px;
+    text-align: center;
+  }
+
+  .finale-line {
+    width: 60px;
+    height: 1px;
+    background: var(--tierra);
+    margin: 2.5rem auto;
+  }
+
+  .finale-small {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    margin-top: 3rem;
+  }
+
+  /* ====== COLOPHON ====== */
+  .colophon {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--warm-white);
+  }
+
+  .colophon p {
+    font-size: 0.75rem;
+    color: var(--mist);
+    letter-spacing: 0.05em;
+  }
+
+  .colophon a {
+    color: var(--tierra);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+
+  .colophon a:hover { border-bottom-color: var(--tierra); }
+
+  /* ====== CANVAS ====== */
+  #scent-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.3;
+  }
+
+  /* ====== RESPONSIVE ====== */
+  @media (max-width: 768px) {
+    .section { padding: 4rem 1.5rem; }
+    .nav-dots { right: 1rem; gap: 1rem; }
+    .nav-dot::after { display: none; }
+    .hero-word { letter-spacing: 0.08em; }
+    .word-nav { gap: 1.2rem; padding: 1rem 1rem; }
+    .word-nav-item { font-size: 0.82rem; letter-spacing: 0.06em; }
+  }
+
+  @media (max-width: 480px) {
+    .section { padding: 3rem 1.2rem; }
+    .nav-dots { display: none; }
+    .word-nav { gap: 0.8rem; }
+    .word-nav-item { font-size: 0.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<canvas id="scent-canvas"></canvas>
+
+<!-- ====== WORD NAV ====== -->
+<nav class="word-nav" id="wordNav">
+  <a class="word-nav-item" data-word="sillage" href="index.html">sillage</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item active" data-word="apapachar">apapachar</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item" data-word="ecotone" href="ecotone.html">ecotone</a>
+  <div class="word-nav-dot"></div>
+  <a class="word-nav-item upcoming" data-word="crown-shyness">crown shyness</a>
+</nav>
+
+<!-- ====== NAV DOTS ====== -->
+<nav class="nav-dots" id="navDots">
+  <div class="nav-dot active" data-section="0" data-label="Apapachar"></div>
+  <div class="nav-dot" data-section="1" data-label="The Root"></div>
+  <div class="nav-dot" data-section="2" data-label="Beyond Touch"></div>
+  <div class="nav-dot" data-section="3" data-label="The Constellation"></div>
+  <div class="nav-dot" data-section="4" data-label="The Invitation"></div>
+</nav>
+
+<!-- ====== TERM MODAL ====== -->
+<div class="term-modal-overlay" id="termOverlay"></div>
+<div class="term-modal" id="termModal">
+  <button class="term-modal-close" id="termClose">&times;</button>
+  <div class="term-modal-word" id="termWord"></div>
+  <div class="term-modal-pron" id="termPron"></div>
+  <div class="term-modal-def" id="termDef"></div>
+  <div class="term-modal-connections" id="termConnections">
+    <div class="term-modal-connections-label">Resonances</div>
+    <div id="termConnectionsList"></div>
+  </div>
+</div>
+
+
+<!-- ======== HERO ======== -->
+<section class="hero section" data-index="0">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="heroParticles"></div>
+  <div class="hero-content">
+    <div class="hero-word">apapachar</div>
+    <div class="hero-pronunciation">/apapaˈtʃar/ — Nahuatl, via Mexican Spanish</div>
+    <div class="hero-line"></div>
+    <div class="hero-subtitle">
+      To embrace with the soul.<br>
+      To caress with tenderness.<br>
+      Care that reaches beyond the surface of contact.
+    </div>
+  </div>
+  <div class="scroll-cue"><span></span></div>
+</section>
+
+
+<!-- ======== I. THE ROOT ======== -->
+<section class="section" data-index="1">
+  <div class="section-inner">
+    <div class="section-label">I</div>
+    <h2>To soften something with your fingers</h2>
+    <p>The Nahuatl root is <em>papatzoa</em> — to soften something with your fingers, to press gently. The root <em>patzoa</em> means to press, to squeeze softly. A physical act: the sensation of kneading, of working warmth into something with your hands.</p>
+
+    <p>But the word that grew from this root traveled beyond the physical. Through Mexican Spanish, <em>apapachar</em> became something the body alone cannot do. It kept the gentleness of the pressing — the care in the fingers — and extended it to a place where fingers can't reach.</p>
+
+    <div class="pullquote">
+      Not the physical act alone,<br>
+      but the intention carried through it.
+    </div>
+
+    <p>Often translated as "to caress with the soul" or "to embrace with the spirit." A kind of care that goes beyond physical touch — tending to someone's emotional state, making them feel held without necessarily holding them. The kind of care that reaches beyond the surface of contact.</p>
+  </div>
+</section>
+
+
+<!-- ======== II. BEYOND TOUCH ======== -->
+<section class="section section-tierra" data-index="2">
+  <div class="section-inner">
+    <div class="section-label">II</div>
+    <h2>Held without holding</h2>
+    <p>There is a difference between a hug and an embrace that says <em>I see you, I am here, you are not alone.</em> The first is physical. The second is something the body carries but the soul performs.</p>
+
+    <p>Apapachar lives in that difference. It's the care you can feel from across a room. The meal someone made because they knew you needed it. The message that arrives at the right moment — not because it was scheduled, but because someone was paying attention.</p>
+
+    <p>It's what happens when intention and tenderness align — when the care isn't transactional, isn't obligatory, isn't performed. When it simply <em>is</em>, radiating outward because that's what it does.</p>
+
+    <div class="pullquote">
+      Tending to someone's emotional state.<br>
+      Making them feel held without necessarily holding them.
+    </div>
+  </div>
+</section>
+
+
+<!-- ======== III. THE CONSTELLATION ======== -->
+<section class="section section-warm" data-index="3">
+  <div class="section-inner">
+    <div class="section-label">III</div>
+    <h2>A language of untranslatable care</h2>
+    <p>Nahuatl is extraordinarily rich with concepts that have no single equivalent in English. Apapachar is part of a constellation — words that point toward things we can feel but struggle to name.</p>
+
+    <div class="etymology-grid">
+      <div class="etymology-card" data-delay="0">
+        <h3>Nepantla</h3>
+        <p>The space between two worlds. A liminal in-betweenness. <span class="term-link" data-term="nepantla">Gloria Anzaldúa</span> adopted this as a concept for cultural border-living — the state of existing at the intersection of identities, fully neither, richly both.</p>
+      </div>
+      <div class="etymology-card" data-delay="200">
+        <h3>Ollin</h3>
+        <p>Sacred movement. The dynamic pulse at the center of all existence. The <span class="term-link" data-term="ollin">Aztec sun stone</span> has ollin at its very center — not stillness, but perpetual, sacred motion. The heartbeat of the cosmos.</p>
+      </div>
+      <div class="etymology-card" data-delay="400">
+        <h3>Apapachar</h3>
+        <p>To embrace with the soul. From <em>papatzoa</em> — to soften, to press gently. The physical root that grew into something the body alone cannot perform. Care that reaches beyond the surface of contact.</p>
+      </div>
+    </div>
+
+    <p>These are not decorative words. They are instruments of perception — each one pointing toward something real that other languages leave unnamed. A culture that creates a word for <em>the space between two worlds</em>, for <em>sacred movement at the center of everything</em>, for <em>care that reaches beyond touch</em> — that culture was paying attention to something we're still learning to see.</p>
+  </div>
+</section>
+
+
+<!-- ======== IV. THE APAPACHANDO INVITACIÓN ======== -->
+<section class="finale section" data-index="4">
+  <div class="section-inner" style="display: flex; flex-direction: column; align-items: center;">
+    <div class="section-label">IV</div>
+    <h2>The apapachando invitación</h2>
+    <p>Not "endow." Not "encourage." Not even "invite" in the transactional sense. Invite in the way that a hug is to <em>apapachar</em> — to embrace with the soul, to warm with affection.</p>
+
+    <p>An embrace that invites. Something that wraps you in warmth as it opens the door. No expectation, no obligation. It remains an invitation. People get to choose.</p>
+
+    <div class="finale-line"></div>
+
+    <p>This is what the best things feel like. Not a notification, not a nudge, not a dark pattern — but an open door. A set of tools and the suggestion that you might use them to make something beautiful. Doorways, not walls. Invitations, not obligations.</p>
+
+    <p>An invitation to become more engaged, more expressive, more powerful in what we create. To share the tools, to inspire people to use them for the causes they believe in and the beauty they want to make.</p>
+
+    <p style="margin-top: 1.5rem; font-style: italic; font-family: 'Cormorant Garamond', serif; color: var(--smoke); font-size: 0.95rem;">I want to be at the highest possible expression of myself,<br>and I don't think I've ever felt more profoundly confident<br>that that's beginning to happen.</p>
+
+    <div class="finale-small">digitalsillage.com</div>
+  </div>
+</section>
+
+<footer class="colophon">
+  <p style="font-size: 0.65rem; color: var(--mist); letter-spacing: 0.12em; margin-bottom: 0.8rem;">muse bear inspired</p>
+  <p><a href="https://room527.com" target="_blank">Room 527</a> · 2026</p>
+</footer>
+
+
+<script>
+// ====== TERM DEFINITIONS ======
+const terms = {
+  'nepantla': {
+    word: 'nepantla',
+    pron: '/neˈpantla/ — Nahuatl',
+    def: 'The space between two worlds. A liminal in-betweenness. Originally describing a geographic and spiritual middle ground in Nahuatl culture. Gloria Anzaldúa, the Chicana scholar and writer, adopted nepantla as a framework for cultural border-living — the state of existing at the intersection of identities, languages, and worlds. Not displacement, but a richness that comes from being fully neither and richly both.',
+    connections: [
+      { label: 'Ecotone', text: 'The tension between two homes — oikos + tonos. Nepantla is the human experience of what ecology calls an ecotone.' },
+      { label: 'Apapachar', text: 'Both words arise from a language that pays attention to the spaces between things.' }
+    ]
+  },
+  'ollin': {
+    word: 'ollin',
+    pron: '/ˈoːlin/ — Nahuatl',
+    def: 'Sacred movement. The dynamic pulse at the center of all existence. Not static being but perpetual, sacred motion — the idea that the fundamental nature of reality is movement, not stillness. The Aztec sun stone places ollin at its very center: the cosmos held together not by a fixed point but by a living, moving heartbeat.',
+    connections: [
+      { label: 'Sillage', text: 'Sillage is the trace of movement — ollin is the movement itself. The sacred pulse that creates the wake.' },
+      { label: 'Ecotone', text: 'The dance of two systems pressing toward and receding from each other — ecotonal dynamics as ollin at the boundary.' }
+    ]
+  }
+};
+
+// ====== TERM MODAL LOGIC ======
+const overlay = document.getElementById('termOverlay');
+const modal = document.getElementById('termModal');
+const termWord = document.getElementById('termWord');
+const termPron = document.getElementById('termPron');
+const termDef = document.getElementById('termDef');
+const termConnectionsList = document.getElementById('termConnectionsList');
+const termConnections = document.getElementById('termConnections');
+
+function openTerm(key) {
+  const t = terms[key];
+  if (!t) return;
+  termWord.textContent = t.word;
+  termPron.textContent = t.pron;
+  termPron.style.display = t.pron ? 'block' : 'none';
+  termDef.textContent = t.def;
+  termConnectionsList.innerHTML = '';
+  if (t.connections && t.connections.length) {
+    termConnections.style.display = 'block';
+    t.connections.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'term-modal-connection';
+      div.innerHTML = `<em>${c.label}</em> — ${c.text}`;
+      termConnectionsList.appendChild(div);
+    });
+  } else {
+    termConnections.style.display = 'none';
+  }
+  overlay.classList.add('active');
+  modal.classList.add('active');
+}
+
+function closeTerm() {
+  overlay.classList.remove('active');
+  modal.classList.remove('active');
+}
+
+overlay.addEventListener('click', closeTerm);
+document.getElementById('termClose').addEventListener('click', closeTerm);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTerm(); });
+
+document.querySelectorAll('.term-link').forEach(el => {
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    openTerm(el.dataset.term);
+  });
+});
+
+// ====== SCROLL PROGRESS ======
+const progressBar = document.getElementById('progressBar');
+window.addEventListener('scroll', () => {
+  const scrollTop = window.scrollY;
+  const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+  progressBar.style.width = (scrollTop / docHeight * 100) + '%';
+});
+
+// ====== WORD NAV ======
+const wordNav = document.getElementById('wordNav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > window.innerHeight * 0.6) {
+    wordNav.classList.add('visible');
+  } else {
+    wordNav.classList.remove('visible');
+  }
+});
+
+// ====== SECTION REVEAL ======
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) entry.target.classList.add('visible');
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+document.querySelectorAll('.section-inner').forEach(el => revealObserver.observe(el));
+
+// ====== STAGGERED REVEALS ======
+const staggerObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const delay = parseInt(entry.target.dataset.delay) || 0;
+      setTimeout(() => entry.target.classList.add('visible'), delay);
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.etymology-card').forEach(el => staggerObserver.observe(el));
+
+// ====== NAV DOTS ======
+const sections = document.querySelectorAll('.section');
+const dots = document.querySelectorAll('.nav-dot');
+
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const index = entry.target.dataset.index;
+      dots.forEach(d => d.classList.remove('active'));
+      dots[index]?.classList.add('active');
+    }
+  });
+}, { threshold: 0.4 });
+
+sections.forEach(s => sectionObserver.observe(s));
+
+dots.forEach(dot => {
+  dot.addEventListener('click', () => {
+    const idx = dot.dataset.section;
+    sections[idx]?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// ====== HERO PARTICLES ======
+const particleContainer = document.getElementById('heroParticles');
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  const size = 3 + Math.random() * 8;
+  p.style.width = size + 'px';
+  p.style.height = size + 'px';
+  p.style.left = (10 + Math.random() * 80) + '%';
+  p.style.top = (10 + Math.random() * 80) + '%';
+  p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dy', (Math.random() * 80 - 40) + 'px');
+  p.style.setProperty('--dx2', (Math.random() * 120 - 60) + 'px');
+  p.style.setProperty('--dy2', (Math.random() * 120 - 60) + 'px');
+  p.style.animationDelay = (Math.random() * 10) + 's';
+  p.style.animationDuration = (8 + Math.random() * 8) + 's';
+  particleContainer.appendChild(p);
+}
+
+// ====== AMBIENT CANVAS ======
+const canvas = document.getElementById('scent-canvas');
+const ctx = canvas.getContext('2d');
+let w, h;
+let trails = [];
+
+function resize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+class Trail {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * w;
+    this.y = Math.random() * h;
+    this.vx = (Math.random() - 0.5) * 0.25;
+    this.vy = (Math.random() - 0.5) * 0.25;
+    this.life = 0;
+    this.maxLife = 400 + Math.random() * 400;
+    this.radius = 80 + Math.random() * 120;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life++;
+    if (this.life > this.maxLife) this.reset();
+  }
+  draw() {
+    const progress = this.life / this.maxLife;
+    const alpha = Math.sin(progress * Math.PI) * 0.02;
+    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+    gradient.addColorStop(0, `rgba(180, 114, 74, ${alpha})`);
+    gradient.addColorStop(1, 'rgba(180, 114, 74, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+  }
+}
+
+for (let i = 0; i < 5; i++) {
+  const t = new Trail();
+  t.life = Math.random() * t.maxLife;
+  trails.push(t);
+}
+
+function animate() {
+  ctx.clearRect(0, 0, w, h);
+  trails.forEach(t => { t.update(); t.draw(); });
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+
+</body>
+</html>
