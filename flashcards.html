@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcards — Digital Sillage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(170deg, #f5efe6 0%, #e8ddd0 40%, #ddd2c3 100%);
+    font-family: 'Cormorant Garamond', 'Garamond', 'Georgia', serif;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 2rem 1rem;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    position: relative;
+  }
+
+  /* Grain overlay */
+  .grain {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 1.5rem; z-index: 1; }
+  .header h1 {
+    font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+    font-weight: 300; letter-spacing: 0.35em;
+    text-transform: uppercase; color: #5a4a3a;
+    margin: 0; line-height: 1.2;
+  }
+  .header h1 a {
+    color: inherit; text-decoration: none;
+    transition: opacity 0.3s;
+  }
+  .header h1 a:hover { opacity: 0.6; }
+  .header-rule {
+    width: 50px; height: 1px;
+    margin: 0.6rem auto;
+    background: linear-gradient(90deg, transparent, #8a7a6a, transparent);
+  }
+  .header-sub {
+    font-size: 0.78rem; font-weight: 400;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: #8a7a6a; margin: 0;
+  }
+
+  /* Card stack container */
+  .stack-container {
+    position: relative;
+    width: 100%; max-width: 640px;
+    height: 340px;
+    z-index: 2; cursor: pointer;
+    overflow: hidden;
+  }
+
+  /* Nav hints */
+  .nav-hint {
+    position: absolute; top: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; z-index: 20;
+    transition: opacity 0.4s;
+  }
+  .nav-hint-left { left: 0; width: calc(50% - 210px); }
+  .nav-hint-right { right: 0; width: calc(50% - 210px); }
+  .nav-hint span {
+    font-size: 2.2rem; color: #8a7a6a; font-weight: 200;
+  }
+
+  /* Card shell (positioned absolutely in stack) */
+  .card-shell {
+    position: absolute; bottom: 0; left: 50%;
+    width: 380px; max-width: 90vw; height: 235px;
+    transition: transform 950ms cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 600ms ease;
+  }
+
+  .card-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: flat;
+  }
+  .card-shell.front .card-inner {
+    transform-style: preserve-3d;
+    transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .card-shell.front { perspective: 1200px; }
+  .card-shell.front.flipped .card-inner {
+    transform: rotateY(180deg);
+  }
+
+  /* Card faces */
+  .card-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 10px 10px 3px 3px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  .card-front {
+    background: linear-gradient(160deg, #fdfaf5 0%, #f5efe6 35%, #ede5d8 100%);
+    box-shadow: 0 10px 50px rgba(90,74,58,0.13),
+                0 2px 6px rgba(90,74,58,0.07),
+                inset 0 1px 0 rgba(255,255,255,0.6);
+    border: 1px solid rgba(180,165,145,0.28);
+    padding: 1.5rem 2rem;
+  }
+
+  .card-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(160deg, #f8f4ed 0%, #f0e8dc 35%, #e8ddd0 100%);
+    box-shadow: 0 10px 50px rgba(90,74,58,0.13),
+                0 2px 6px rgba(90,74,58,0.07),
+                inset 0 1px 0 rgba(255,255,255,0.4);
+    border: 1px solid rgba(180,165,145,0.28);
+    padding: 1.2rem 2rem;
+    overflow: auto;
+  }
+
+  /* Corner marks (front face) */
+  .corner-mark {
+    position: absolute; width: 18px; height: 18px;
+  }
+  .corner-mark.tl { top: 14px; left: 14px; border-top: 1px solid rgba(138,122,106,0.22); border-left: 1px solid rgba(138,122,106,0.22); }
+  .corner-mark.tr { top: 14px; right: 14px; border-top: 1px solid rgba(138,122,106,0.22); border-right: 1px solid rgba(138,122,106,0.22); }
+  .corner-mark.bl { bottom: 14px; left: 14px; border-bottom: 1px solid rgba(138,122,106,0.22); border-left: 1px solid rgba(138,122,106,0.22); }
+  .corner-mark.br { bottom: 14px; right: 14px; border-bottom: 1px solid rgba(138,122,106,0.22); border-right: 1px solid rgba(138,122,106,0.22); }
+
+  /* Front face text */
+  .card-word {
+    font-family: 'Cormorant Garamond', 'Garamond', serif;
+    font-size: clamp(1.8rem, 5.5vw, 2.6rem);
+    font-weight: 300; font-style: italic;
+    color: #3d3228; letter-spacing: 0.04em;
+    text-align: center; line-height: 1.1;
+  }
+  .card-word-rule {
+    width: 40px; height: 1px; margin-top: 0.9rem;
+    background: linear-gradient(90deg, transparent, #b4a591, transparent);
+  }
+  .card-hint {
+    font-size: 0.63rem; letter-spacing: 0.25em;
+    text-transform: uppercase; color: #a89880;
+    margin-top: 0.6rem; font-weight: 400;
+  }
+
+  /* Back face */
+  .ruled-line {
+    position: absolute; left: 28px; right: 28px;
+    height: 1px; background: rgba(180,140,120,0.09);
+    pointer-events: none;
+  }
+  .red-margin {
+    position: absolute; left: 46px; top: 24px; bottom: 24px;
+    width: 1px; background: rgba(180,80,80,0.1);
+    pointer-events: none;
+  }
+  .back-word {
+    font-family: 'Cormorant Garamond', 'Garamond', serif;
+    font-size: 1rem; font-weight: 600; font-style: italic;
+    color: #5a4a3a; letter-spacing: 0.06em;
+    margin-bottom: 0.5rem; text-align: center;
+    position: relative; z-index: 1; flex-shrink: 0;
+  }
+  .back-rule {
+    width: 30px; height: 1px; margin-bottom: 0.6rem;
+    background: linear-gradient(90deg, transparent, #b4a591, transparent);
+    position: relative; z-index: 1; flex-shrink: 0;
+  }
+  .back-def {
+    font-family: 'Cormorant Garamond', 'Garamond', serif;
+    font-size: clamp(0.82rem, 2vw, 0.92rem);
+    font-weight: 400; color: #4a3d32;
+    line-height: 1.6; text-align: center;
+    margin: 0; max-width: 310px;
+    position: relative; z-index: 1;
+  }
+
+  /* Exiting card */
+  .card-shell.exiting {
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Progress area */
+  .progress-area {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.8rem;
+    z-index: 1; margin-top: 0.5rem;
+  }
+  .progress-count {
+    font-size: 0.78rem; letter-spacing: 0.15em;
+    color: #8a7a6a; font-weight: 400;
+  }
+  .progress-track {
+    width: 180px; height: 2px;
+    background: rgba(138,122,106,0.12);
+    border-radius: 1px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #b4a591, #8a7a6a);
+    border-radius: 1px;
+    transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Sort toggle */
+  .sort-toggle {
+    display: flex; gap: 0.4rem;
+    align-items: center; margin-top: 0.2rem;
+  }
+  .sort-btn {
+    font-size: 0.58rem; letter-spacing: 0.18em;
+    text-transform: uppercase; color: #8a7a6a;
+    font-weight: 400; cursor: pointer;
+    transition: opacity 0.4s, font-weight 0.4s;
+    padding: 0.2rem 0.35rem;
+    background: none; border: none;
+    font-family: 'Cormorant Garamond', 'Garamond', serif;
+  }
+  .sort-btn.active { opacity: 0.7; font-weight: 500; cursor: default; }
+  .sort-btn:not(.active) { opacity: 0.2; }
+
+  /* Hints row */
+  .hints-row {
+    display: flex; gap: 1.8rem; margin-top: 0.3rem;
+  }
+  .hints-row span {
+    font-size: 0.6rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: #8a7a6a;
+    font-weight: 400;
+  }
+
+  /* Loading state */
+  .loading-msg {
+    font-size: 1rem; color: #8a7a6a;
+    font-style: italic; letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+
+<div class="header">
+  <h1><a href="/">Digital Sillage</a></h1>
+  <div class="header-rule"></div>
+  <p class="header-sub">Flashcards</p>
+</div>
+
+<div class="stack-container" id="stackContainer">
+  <div class="nav-hint nav-hint-left" id="hintLeft">
+    <span>‹</span>
+  </div>
+  <div class="nav-hint nav-hint-right" id="hintRight">
+    <span>›</span>
+  </div>
+  <div id="cardStack"></div>
+  <p class="loading-msg" id="loadingMsg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">loading&thinsp;…</p>
+</div>
+
+<div class="progress-area" id="progressArea" style="visibility:hidden;">
+  <span class="progress-count" id="progressCount"></span>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="sort-toggle">
+    <button class="sort-btn" id="sortAlpha" type="button">a–z</button>
+    <button class="sort-btn active" id="sortShuffle" type="button">shuffle</button>
+  </div>
+  <div class="hints-row">
+    <span id="hintPrev">← prev</span>
+    <span>tap to flip</span>
+    <span id="hintNext">next →</span>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ─── Constants ───
+  const POS = [
+    { scale: 1,    y: 12  },
+    { scale: 0.95, y: -16 },
+    { scale: 0.90, y: -44 },
+  ];
+  const EXIT_Y = 300;
+  const LOCK_MS = 280;
+
+  // ─── State ───
+  let allCards = [];
+  let deck = [];
+  let windowStart = 0;
+  let flipped = false;
+  let isAnimating = false;
+  let sortMode = 'shuffle';
+
+  // ─── DOM refs ───
+  const stackContainer = document.getElementById('stackContainer');
+  const cardStack = document.getElementById('cardStack');
+  const loadingMsg = document.getElementById('loadingMsg');
+  const progressArea = document.getElementById('progressArea');
+  const progressCount = document.getElementById('progressCount');
+  const progressFill = document.getElementById('progressFill');
+  const hintLeft = document.getElementById('hintLeft');
+  const hintRight = document.getElementById('hintRight');
+  const hintPrev = document.getElementById('hintPrev');
+  const hintNext = document.getElementById('hintNext');
+  const sortAlphaBtn = document.getElementById('sortAlpha');
+  const sortShuffleBtn = document.getElementById('sortShuffle');
+
+  // ─── Utilities ───
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ─── Card HTML builders ───
+  function buildFrontFace(word) {
+    return '<div class="card-face card-front">' +
+      '<div class="corner-mark tl"></div>' +
+      '<div class="corner-mark tr"></div>' +
+      '<div class="corner-mark bl"></div>' +
+      '<div class="corner-mark br"></div>' +
+      '<span class="card-word">' + escapeHtml(word) + '</span>' +
+      '<div class="card-word-rule"></div>' +
+      '<span class="card-hint">tap to reveal</span>' +
+    '</div>';
+  }
+
+  function buildBackFace(word, definition) {
+    var ruledLines = '';
+    for (var i = 0; i < 7; i++) {
+      ruledLines += '<div class="ruled-line" style="top:' + (40 + i * 28) + 'px;"></div>';
+    }
+    return '<div class="card-face card-back">' +
+      ruledLines +
+      '<div class="red-margin"></div>' +
+      '<span class="back-word">' + escapeHtml(word) + '</span>' +
+      '<div class="back-rule"></div>' +
+      '<p class="back-def">' + escapeHtml(definition) + '</p>' +
+    '</div>';
+  }
+
+  function makeCardShell(card, pos, isFront) {
+    var el = document.createElement('div');
+    el.className = 'card-shell' + (isFront ? ' front' : '');
+    var target = POS[pos];
+    el.style.transform = 'translate(-50%, 0) translateY(' + target.y + 'px) scale(' + target.scale + ')';
+    el.style.zIndex = 3 - pos;
+
+    var inner = document.createElement('div');
+    inner.className = 'card-inner';
+    inner.innerHTML = buildFrontFace(card.word);
+    if (isFront) {
+      inner.innerHTML += buildBackFace(card.word, card.definition);
+    }
+    el.appendChild(inner);
+    return el;
+  }
+
+  // ─── Render ───
+  function render() {
+    // Clear non-exiting cards
+    var children = cardStack.children;
+    var toRemove = [];
+    for (var i = 0; i < children.length; i++) {
+      if (!children[i].classList.contains('exiting')) {
+        toRemove.push(children[i]);
+      }
+    }
+    for (var i = 0; i < toRemove.length; i++) {
+      cardStack.removeChild(toRemove[i]);
+    }
+
+    // Build slots (up to 3 cards)
+    var slots = [];
+    for (var pos = 0; pos < 3; pos++) {
+      var di = windowStart + pos;
+      if (di >= 0 && di < deck.length) {
+        slots.push({ card: deck[di], pos: pos });
+      }
+    }
+
+    // Render back-to-front for correct stacking
+    for (var i = slots.length - 1; i >= 0; i--) {
+      var slot = slots[i];
+      var isFront = slot.pos === 0;
+      var el = makeCardShell(slot.card, slot.pos, isFront);
+      if (isFront && flipped) {
+        el.classList.add('flipped');
+      }
+      cardStack.appendChild(el);
+    }
+
+    updateProgress();
+  }
+
+  function updateProgress() {
+    var current = windowStart + 1;
+    var total = deck.length;
+    progressCount.innerHTML = current + '\u2009/\u2009' + total;
+    progressFill.style.width = ((current / total) * 100) + '%';
+
+    hintLeft.style.opacity = windowStart > 0 ? '0.3' : '0.08';
+    hintRight.style.opacity = windowStart < deck.length - 1 ? '0.3' : '0.08';
+    hintPrev.style.opacity = windowStart > 0 ? '0.45' : '0.12';
+    hintNext.style.opacity = windowStart < deck.length - 1 ? '0.45' : '0.12';
+  }
+
+  // ─── Exit animation ───
+  function spawnExitCard(card) {
+    var el = document.createElement('div');
+    el.className = 'card-shell exiting';
+    var target = POS[0];
+    el.style.transform = 'translate(-50%, 0) translateY(' + target.y + 'px) scale(1)';
+    el.style.opacity = '1';
+
+    var inner = document.createElement('div');
+    inner.className = 'card-inner';
+    inner.innerHTML = buildFrontFace(card.word);
+    el.appendChild(inner);
+    cardStack.appendChild(el);
+
+    // Force layout read
+    el.getBoundingClientRect();
+
+    // Trigger exit on next frame
+    requestAnimationFrame(function () {
+      el.style.transform = 'translate(-50%, 0) translateY(' + EXIT_Y + 'px) scale(1)';
+      el.style.opacity = '0';
+    });
+
+    setTimeout(function () {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }, 1000);
+  }
+
+  // ─── Navigation ───
+  function advance() {
+    if (isAnimating || windowStart >= deck.length - 1) return;
+    isAnimating = true;
+    flipped = false;
+
+    spawnExitCard(deck[windowStart]);
+    windowStart++;
+    render();
+
+    setTimeout(function () { isAnimating = false; }, LOCK_MS);
+  }
+
+  function retreat() {
+    if (isAnimating || windowStart <= 0) return;
+    isAnimating = true;
+    flipped = false;
+    windowStart--;
+    render();
+
+    setTimeout(function () { isAnimating = false; }, LOCK_MS);
+  }
+
+  function toggleFlip() {
+    if (isAnimating) return;
+    flipped = !flipped;
+    var frontCard = cardStack.querySelector('.card-shell.front');
+    if (frontCard) {
+      if (flipped) {
+        frontCard.classList.add('flipped');
+      } else {
+        frontCard.classList.remove('flipped');
+      }
+    }
+  }
+
+  // ─── Click handler ───
+  stackContainer.addEventListener('click', function (e) {
+    if (isAnimating) return;
+    var rect = stackContainer.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var center = rect.width / 2;
+    var halfCard = Math.min(200, rect.width * 0.44);
+
+    if (x < center - halfCard) retreat();
+    else if (x > center + halfCard) advance();
+    else toggleFlip();
+  });
+
+  // ─── Keyboard ───
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft') retreat();
+    else if (e.key === 'ArrowRight') advance();
+    else if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      toggleFlip();
+    }
+  });
+
+  // ─── Sort toggle ───
+  function setSort(mode) {
+    if (isAnimating || mode === sortMode) return;
+    sortMode = mode;
+    if (mode === 'alpha') {
+      deck = allCards.slice().sort(function (a, b) {
+        return a.word.localeCompare(b.word, undefined, { sensitivity: 'base' });
+      });
+    } else {
+      deck = shuffle(allCards);
+    }
+    windowStart = 0;
+    flipped = false;
+    // Clear all exiting cards
+    var exiting = cardStack.querySelectorAll('.exiting');
+    for (var i = 0; i < exiting.length; i++) {
+      exiting[i].parentNode.removeChild(exiting[i]);
+    }
+    render();
+    updateSortButtons();
+  }
+
+  function updateSortButtons() {
+    if (sortMode === 'alpha') {
+      sortAlphaBtn.classList.add('active');
+      sortShuffleBtn.classList.remove('active');
+    } else {
+      sortShuffleBtn.classList.add('active');
+      sortAlphaBtn.classList.remove('active');
+    }
+  }
+
+  sortAlphaBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    setSort('alpha');
+  });
+  sortShuffleBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    setSort('shuffle');
+  });
+
+  // ─── Load data ───
+  fetch('flashcard-data.json')
+    .then(function (res) { return res.json(); })
+    .then(function (data) {
+      allCards = data.cards;
+      deck = shuffle(allCards);
+      loadingMsg.style.display = 'none';
+      progressArea.style.visibility = 'visible';
+      render();
+    })
+    .catch(function (err) {
+      loadingMsg.textContent = 'could not load cards';
+      console.error(err);
+    });
+})();
+</script>
+
+</body>
+</html>
