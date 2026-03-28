@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flashcards — Digital Sillage</title>
+<title>Flashcards — Erik&#x2019;s Vocabulary</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&display=swap" rel="stylesheet">
@@ -17,7 +17,7 @@
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     padding: 2rem 1rem;
-    overflow: hidden;
+    overflow-x: hidden;
     user-select: none;
     -webkit-user-select: none;
     position: relative;
@@ -57,10 +57,11 @@
   /* Card stack container */
   .stack-container {
     position: relative;
-    width: 100%; max-width: 640px;
-    height: 340px;
+    width: 100%; max-width: 680px;
+    height: 380px;
     z-index: 2; cursor: pointer;
     overflow: hidden;
+    touch-action: pan-y;
   }
 
   /* Nav hints */
@@ -70,16 +71,16 @@
     pointer-events: none; z-index: 20;
     transition: opacity 0.4s;
   }
-  .nav-hint-left { left: 0; width: calc(50% - 210px); }
-  .nav-hint-right { right: 0; width: calc(50% - 210px); }
+  .nav-hint-left { left: 0; width: calc(50% - 240px); }
+  .nav-hint-right { right: 0; width: calc(50% - 240px); }
   .nav-hint span {
     font-size: 2.2rem; color: #8a7a6a; font-weight: 200;
   }
 
-  /* Card shell (positioned absolutely in stack) */
+  /* Card shell */
   .card-shell {
     position: absolute; bottom: 0; left: 50%;
-    width: 380px; max-width: 90vw; height: 235px;
+    width: 440px; max-width: 90vw; height: 272px;
     transition: transform 950ms cubic-bezier(0.22, 1, 0.36, 1),
                 opacity 600ms ease;
   }
@@ -129,7 +130,14 @@
     overflow: auto;
   }
 
-  /* Corner marks (front face) */
+  /* Behind-card shadow reduction for depth */
+  .card-shell:not(.front):not(.exiting) .card-front {
+    box-shadow: 0 6px 30px rgba(90,74,58,0.08),
+                0 1px 4px rgba(90,74,58,0.04),
+                inset 0 1px 0 rgba(255,255,255,0.4);
+  }
+
+  /* Corner marks */
   .corner-mark {
     position: absolute; width: 18px; height: 18px;
   }
@@ -141,7 +149,7 @@
   /* Front face text */
   .card-word {
     font-family: 'Cormorant Garamond', 'Garamond', serif;
-    font-size: clamp(1.8rem, 5.5vw, 2.6rem);
+    font-size: clamp(2.2rem, 6vw, 3.2rem);
     font-weight: 300; font-style: italic;
     color: #3d3228; letter-spacing: 0.04em;
     text-align: center; line-height: 1.1;
@@ -151,7 +159,7 @@
     background: linear-gradient(90deg, transparent, #b4a591, transparent);
   }
   .card-hint {
-    font-size: 0.63rem; letter-spacing: 0.25em;
+    font-size: 0.7rem; letter-spacing: 0.25em;
     text-transform: uppercase; color: #a89880;
     margin-top: 0.6rem; font-weight: 400;
   }
@@ -169,7 +177,7 @@
   }
   .back-word {
     font-family: 'Cormorant Garamond', 'Garamond', serif;
-    font-size: 1rem; font-weight: 600; font-style: italic;
+    font-size: 1.15rem; font-weight: 600; font-style: italic;
     color: #5a4a3a; letter-spacing: 0.06em;
     margin-bottom: 0.5rem; text-align: center;
     position: relative; z-index: 1; flex-shrink: 0;
@@ -181,10 +189,10 @@
   }
   .back-def {
     font-family: 'Cormorant Garamond', 'Garamond', serif;
-    font-size: clamp(0.82rem, 2vw, 0.92rem);
+    font-size: clamp(0.92rem, 2.2vw, 1.05rem);
     font-weight: 400; color: #4a3d32;
-    line-height: 1.6; text-align: center;
-    margin: 0; max-width: 310px;
+    line-height: 1.7; text-align: center;
+    margin: 0; max-width: 360px;
     position: relative; z-index: 1;
   }
 
@@ -201,7 +209,7 @@
     z-index: 1; margin-top: 0.5rem;
   }
   .progress-count {
-    font-size: 0.78rem; letter-spacing: 0.15em;
+    font-size: 0.85rem; letter-spacing: 0.15em;
     color: #8a7a6a; font-weight: 400;
   }
   .progress-track {
@@ -222,7 +230,7 @@
     align-items: center; margin-top: 0.2rem;
   }
   .sort-btn {
-    font-size: 0.58rem; letter-spacing: 0.18em;
+    font-size: 0.68rem; letter-spacing: 0.18em;
     text-transform: uppercase; color: #8a7a6a;
     font-weight: 400; cursor: pointer;
     transition: opacity 0.4s, font-weight 0.4s;
@@ -237,16 +245,159 @@
   .hints-row {
     display: flex; gap: 1.8rem; margin-top: 0.3rem;
   }
-  .hints-row span {
-    font-size: 0.6rem; letter-spacing: 0.15em;
+  .hints-row span, .hints-row button {
+    font-size: 0.68rem; letter-spacing: 0.15em;
     text-transform: uppercase; color: #8a7a6a;
     font-weight: 400;
   }
+  .hints-row button {
+    background: none; border: none;
+    font-family: 'Cormorant Garamond', 'Garamond', serif;
+    cursor: pointer; padding: 0.15rem 0.3rem;
+    transition: opacity 0.3s;
+  }
+  .hints-row button:hover { opacity: 0.7 !important; }
 
   /* Loading state */
   .loading-msg {
     font-size: 1rem; color: #8a7a6a;
     font-style: italic; letter-spacing: 0.1em;
+  }
+
+  /* ─── Minimap ─── */
+  .minimap {
+    position: fixed;
+    right: 22px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: clamp(280px, 48vh, 460px);
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+  .minimap.visible { opacity: 1; }
+
+  .minimap-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .minimap-vline {
+    position: absolute;
+    right: 4px;
+    top: 0; bottom: 0;
+    width: 0.5px;
+    background: rgba(138, 122, 106, 0.08);
+  }
+
+  .minimap-letter {
+    position: absolute;
+    right: 8px;
+    transform: translateY(-50%);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.5rem;
+    text-transform: uppercase;
+    color: #8a7a6a;
+    opacity: 0.25;
+    line-height: 1;
+    transition: opacity 0.15s;
+    pointer-events: none;
+  }
+
+  .minimap-tick {
+    position: absolute;
+    right: 2px;
+    width: 5px;
+    height: 1px;
+    background: #8a7a6a;
+    opacity: 0.08;
+    transform: translateY(-50%);
+    transition: opacity 0.15s;
+    pointer-events: none;
+  }
+
+  .minimap-pos {
+    position: absolute;
+    right: 0;
+    width: 11px;
+    height: 2px;
+    background: #5a4a3a;
+    border-radius: 1px;
+    transform: translateY(-50%);
+    transition: top 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s;
+    pointer-events: none;
+  }
+
+  .minimap-tooltip {
+    position: absolute;
+    right: calc(100% + 10px);
+    transform: translateY(-50%);
+    background: rgba(253, 250, 245, 0.95);
+    border: 1px solid rgba(180, 165, 145, 0.22);
+    padding: 0.2rem 0.55rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: #5a4a3a;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    border-radius: 3px;
+    box-shadow: 0 2px 8px rgba(90,74,58,0.06);
+  }
+
+  @media (max-width: 900px) {
+    .minimap { display: none; }
+  }
+  @media (max-width: 1200px) and (min-width: 901px) {
+    .minimap { right: 10px; width: 18px; }
+    .minimap-letter { font-size: 0.45rem; right: 6px; }
+    .minimap-tick { width: 4px; }
+    .minimap-pos { width: 8px; }
+  }
+
+  /* ─── Mobile: portrait cards ─── */
+  @media (max-width: 640px) {
+    body { padding: 1rem 0.75rem; }
+    .header { margin-bottom: 1rem; }
+
+    .stack-container { height: 520px; }
+
+    .card-shell {
+      width: 85vw; max-width: 340px;
+      height: 420px;
+    }
+
+    .card-front { padding: 2rem 1.8rem; }
+    .card-back { padding: 1.5rem 1.8rem; }
+
+    .card-word { font-size: 2.4rem; }
+    .card-hint { font-size: 0.72rem; }
+
+    .back-word { font-size: 1.15rem; }
+    .back-def {
+      font-size: 1.02rem; line-height: 1.75;
+      max-width: 280px;
+    }
+
+    .ruled-line { left: 22px; right: 22px; }
+    .red-margin { left: 38px; }
+
+    .corner-mark { width: 16px; height: 16px; }
+    .corner-mark.tl { top: 12px; left: 12px; }
+    .corner-mark.tr { top: 12px; right: 12px; }
+    .corner-mark.bl { bottom: 12px; left: 12px; }
+    .corner-mark.br { bottom: 12px; right: 12px; }
+
+    .nav-hint { display: none; }
+
+    .progress-count { font-size: 0.88rem; }
+    .sort-btn { font-size: 0.67rem; }
+    .hints-row span, .hints-row button { font-size: 0.67rem; }
   }
 </style>
 </head>
@@ -255,20 +406,20 @@
 <div class="grain"></div>
 
 <div class="header">
-  <h1><a href="/">Digital Sillage</a></h1>
+  <h1><a href="/">Erik&#x2019;s Vocabulary</a></h1>
   <div class="header-rule"></div>
   <p class="header-sub">Flashcards</p>
 </div>
 
 <div class="stack-container" id="stackContainer">
   <div class="nav-hint nav-hint-left" id="hintLeft">
-    <span>‹</span>
+    <span>&#x2039;</span>
   </div>
   <div class="nav-hint nav-hint-right" id="hintRight">
-    <span>›</span>
+    <span>&#x203A;</span>
   </div>
   <div id="cardStack"></div>
-  <p class="loading-msg" id="loadingMsg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">loading&thinsp;…</p>
+  <p class="loading-msg" id="loadingMsg" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">loading&#x2009;&#x2026;</p>
 </div>
 
 <div class="progress-area" id="progressArea" style="visibility:hidden;">
@@ -277,54 +428,89 @@
     <div class="progress-fill" id="progressFill"></div>
   </div>
   <div class="sort-toggle">
-    <button class="sort-btn" id="sortAlpha" type="button">a–z</button>
+    <button class="sort-btn" id="sortAlpha" type="button">a&#x2013;z</button>
     <button class="sort-btn active" id="sortShuffle" type="button">shuffle</button>
   </div>
   <div class="hints-row">
-    <span id="hintPrev">← prev</span>
+    <button type="button" id="hintPrev">&#x2190; prev</button>
     <span>tap to flip</span>
-    <span id="hintNext">next →</span>
+    <button type="button" id="hintNext">next &#x2192;</button>
   </div>
+</div>
+
+<div class="minimap" id="minimap">
+  <div class="minimap-track" id="minimapTrack">
+    <div class="minimap-vline"></div>
+  </div>
+  <div class="minimap-tooltip" id="minimapTooltip"></div>
 </div>
 
 <script>
 (function () {
   // ─── Constants ───
-  const POS = [
-    { scale: 1,    y: 12  },
-    { scale: 0.95, y: -16 },
-    { scale: 0.90, y: -44 },
+  var isMobile = window.innerWidth <= 640;
+  var POS_DESKTOP = [
+    { scale: 1,    y: 14  },
+    { scale: 0.95, y: -18 },
+    { scale: 0.90, y: -50 },
   ];
-  const EXIT_Y = 300;
-  const LOCK_MS = 280;
+  var POS_MOBILE = [
+    { scale: 1,    y: 20  },
+    { scale: 0.95, y: -20 },
+    { scale: 0.90, y: -58 },
+  ];
+  var POS = isMobile ? POS_MOBILE : POS_DESKTOP;
+  var EXIT_Y = isMobile ? 550 : 350;
+  var LOCK_MS = 280;
+
+  window.addEventListener('resize', function () {
+    var was = isMobile;
+    isMobile = window.innerWidth <= 640;
+    if (was !== isMobile) {
+      POS = isMobile ? POS_MOBILE : POS_DESKTOP;
+      EXIT_Y = isMobile ? 550 : 350;
+      if (deck.length) render();
+    }
+  });
 
   // ─── State ───
-  let allCards = [];
-  let deck = [];
-  let windowStart = 0;
-  let flipped = false;
-  let isAnimating = false;
-  let sortMode = 'shuffle';
+  var allCards = [];
+  var deck = [];
+  var windowStart = 0;
+  var flipped = false;
+  var isAnimating = false;
+  var sortMode = 'shuffle';
+
+  // Sorted deck (always alphabetical, for minimap)
+  var sortedAllCards = [];
+  var wordToSortedIdx = {};
 
   // ─── DOM refs ───
-  const stackContainer = document.getElementById('stackContainer');
-  const cardStack = document.getElementById('cardStack');
-  const loadingMsg = document.getElementById('loadingMsg');
-  const progressArea = document.getElementById('progressArea');
-  const progressCount = document.getElementById('progressCount');
-  const progressFill = document.getElementById('progressFill');
-  const hintLeft = document.getElementById('hintLeft');
-  const hintRight = document.getElementById('hintRight');
-  const hintPrev = document.getElementById('hintPrev');
-  const hintNext = document.getElementById('hintNext');
-  const sortAlphaBtn = document.getElementById('sortAlpha');
-  const sortShuffleBtn = document.getElementById('sortShuffle');
+  var stackContainer = document.getElementById('stackContainer');
+  var cardStack = document.getElementById('cardStack');
+  var loadingMsg = document.getElementById('loadingMsg');
+  var progressArea = document.getElementById('progressArea');
+  var progressCount = document.getElementById('progressCount');
+  var progressFill = document.getElementById('progressFill');
+  var hintLeft = document.getElementById('hintLeft');
+  var hintRight = document.getElementById('hintRight');
+  var hintPrev = document.getElementById('hintPrev');
+  var hintNext = document.getElementById('hintNext');
+  var sortAlphaBtn = document.getElementById('sortAlpha');
+  var sortShuffleBtn = document.getElementById('sortShuffle');
+
+  // Minimap refs (set during build)
+  var minimapEl = document.getElementById('minimap');
+  var minimapTrack = document.getElementById('minimapTrack');
+  var minimapTooltip = document.getElementById('minimapTooltip');
+  var minimapPos = null;
+  var minimapItems = []; // {el, pct, baseOpacity}
 
   // ─── Utilities ───
   function shuffle(arr) {
-    const a = arr.slice();
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
       var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
     }
     return a;
@@ -351,7 +537,7 @@
 
   function buildBackFace(word, definition) {
     var ruledLines = '';
-    for (var i = 0; i < 7; i++) {
+    for (var i = 0; i < 14; i++) {
       ruledLines += '<div class="ruled-line" style="top:' + (40 + i * 28) + 'px;"></div>';
     }
     return '<div class="card-face card-back">' +
@@ -382,7 +568,6 @@
 
   // ─── Render ───
   function render() {
-    // Clear non-exiting cards
     var children = cardStack.children;
     var toRemove = [];
     for (var i = 0; i < children.length; i++) {
@@ -394,7 +579,6 @@
       cardStack.removeChild(toRemove[i]);
     }
 
-    // Build slots (up to 3 cards)
     var slots = [];
     for (var pos = 0; pos < 3; pos++) {
       var di = windowStart + pos;
@@ -403,7 +587,6 @@
       }
     }
 
-    // Render back-to-front for correct stacking
     for (var i = slots.length - 1; i >= 0; i--) {
       var slot = slots[i];
       var isFront = slot.pos === 0;
@@ -425,8 +608,21 @@
 
     hintLeft.style.opacity = windowStart > 0 ? '0.3' : '0.08';
     hintRight.style.opacity = windowStart < deck.length - 1 ? '0.3' : '0.08';
-    hintPrev.style.opacity = windowStart > 0 ? '0.45' : '0.12';
-    hintNext.style.opacity = windowStart < deck.length - 1 ? '0.45' : '0.12';
+    hintPrev.style.opacity = windowStart > 0 ? '0.55' : '0.2';
+    hintNext.style.opacity = windowStart < deck.length - 1 ? '0.55' : '0.2';
+
+    updateMinimapPos();
+  }
+
+  // ─── Minimap position ───
+  function updateMinimapPos() {
+    if (!minimapPos || !deck.length) return;
+    var currentCard = deck[windowStart];
+    var sortedIdx = wordToSortedIdx[currentCard.word];
+    if (sortedIdx === undefined) sortedIdx = 0;
+    var pct = (sortedIdx / (sortedAllCards.length - 1)) * 100;
+    minimapPos.style.top = pct + '%';
+    minimapPos.style.opacity = sortMode === 'alpha' ? '0.5' : '0.12';
   }
 
   // ─── Exit animation ───
@@ -443,10 +639,8 @@
     el.appendChild(inner);
     cardStack.appendChild(el);
 
-    // Force layout read
     el.getBoundingClientRect();
 
-    // Trigger exit on next frame
     requestAnimationFrame(function () {
       el.style.transform = 'translate(-50%, 0) translateY(' + EXIT_Y + 'px) scale(1)';
       el.style.opacity = '0';
@@ -462,11 +656,9 @@
     if (isAnimating || windowStart >= deck.length - 1) return;
     isAnimating = true;
     flipped = false;
-
     spawnExitCard(deck[windowStart]);
     windowStart++;
     render();
-
     setTimeout(function () { isAnimating = false; }, LOCK_MS);
   }
 
@@ -476,8 +668,20 @@
     flipped = false;
     windowStart--;
     render();
-
     setTimeout(function () { isAnimating = false; }, LOCK_MS);
+  }
+
+  function jumpTo(idx) {
+    if (idx < 0) idx = 0;
+    if (idx >= deck.length) idx = deck.length - 1;
+    if (idx === windowStart) return;
+    flipped = false;
+    var exiting = cardStack.querySelectorAll('.exiting');
+    for (var i = 0; i < exiting.length; i++) {
+      exiting[i].parentNode.removeChild(exiting[i]);
+    }
+    windowStart = idx;
+    render();
   }
 
   function toggleFlip() {
@@ -485,21 +689,20 @@
     flipped = !flipped;
     var frontCard = cardStack.querySelector('.card-shell.front');
     if (frontCard) {
-      if (flipped) {
-        frontCard.classList.add('flipped');
-      } else {
-        frontCard.classList.remove('flipped');
-      }
+      if (flipped) frontCard.classList.add('flipped');
+      else frontCard.classList.remove('flipped');
     }
   }
 
   // ─── Click handler ───
+  var suppressClick = false;
   stackContainer.addEventListener('click', function (e) {
+    if (suppressClick) { suppressClick = false; return; }
     if (isAnimating) return;
     var rect = stackContainer.getBoundingClientRect();
     var x = e.clientX - rect.left;
     var center = rect.width / 2;
-    var halfCard = Math.min(200, rect.width * 0.44);
+    var halfCard = Math.min(240, rect.width * 0.44);
 
     if (x < center - halfCard) retreat();
     else if (x > center + halfCard) advance();
@@ -529,7 +732,6 @@
     }
     windowStart = 0;
     flipped = false;
-    // Clear all exiting cards
     var exiting = cardStack.querySelectorAll('.exiting');
     for (var i = 0; i < exiting.length; i++) {
       exiting[i].parentNode.removeChild(exiting[i]);
@@ -557,14 +759,309 @@
     setSort('shuffle');
   });
 
+  // ─── Prev/Next buttons ───
+  hintPrev.addEventListener('click', function (e) {
+    e.stopPropagation();
+    retreat();
+  });
+  hintNext.addEventListener('click', function (e) {
+    e.stopPropagation();
+    advance();
+  });
+
+  // ─── Touch drag-to-swipe (mobile) ───
+  var touchStartX = 0;
+  var touchStartY = 0;
+  var touchStartTime = 0;
+  var isDragging = false;
+  var dragDecided = false;
+  var dragDeltaX = 0;
+  var dragFrontCard = null;
+  var dragBehindCard = null;
+  var dragThirdCard = null;
+
+  stackContainer.addEventListener('touchstart', function (e) {
+    if (isAnimating) return;
+    var t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchStartTime = Date.now();
+    isDragging = false;
+    dragDecided = false;
+    dragDeltaX = 0;
+
+    // Grab references to the stack cards
+    dragFrontCard = cardStack.querySelector('.card-shell.front');
+    dragBehindCard = null;
+    dragThirdCard = null;
+    var shells = cardStack.querySelectorAll('.card-shell:not(.exiting):not(.front)');
+    for (var i = 0; i < shells.length; i++) {
+      if (shells[i].style.zIndex === '2') dragBehindCard = shells[i];
+      if (shells[i].style.zIndex === '1') dragThirdCard = shells[i];
+    }
+  }, { passive: true });
+
+  stackContainer.addEventListener('touchmove', function (e) {
+    if (isAnimating || !dragFrontCard) return;
+    var t = e.touches[0];
+    var dx = t.clientX - touchStartX;
+    var dy = t.clientY - touchStartY;
+
+    // Decide: horizontal drag or vertical scroll?
+    if (!dragDecided) {
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+        isDragging = true;
+        dragDecided = true;
+        dragFrontCard.style.transition = 'none';
+        dragFrontCard.style.willChange = 'transform';
+        if (dragBehindCard) dragBehindCard.style.transition = 'none';
+        if (dragThirdCard) dragThirdCard.style.transition = 'none';
+      } else if (Math.abs(dy) > 10 && Math.abs(dy) >= Math.abs(dx)) {
+        dragDecided = true;
+        isDragging = false;
+        dragFrontCard = null;
+        return;
+      } else {
+        return;
+      }
+    }
+
+    if (!isDragging) return;
+    e.preventDefault();
+
+    dragDeltaX = dx;
+
+    // Rotation capped at ±8°
+    var rot = Math.max(-8, Math.min(8, dx * 0.05));
+    // Opacity fades as card moves from center
+    var opacity = Math.max(0.3, 1 - Math.abs(dx) / 600);
+
+    // Move front card with finger (1:1 tracking)
+    var baseY = POS[0].y;
+    dragFrontCard.style.transform = 'translate(-50%, 0) translateX(' + dx + 'px) translateY(' + baseY + 'px) scale(1) rotate(' + rot + 'deg)';
+    dragFrontCard.style.opacity = opacity;
+
+    // Behind cards scale up toward front position
+    var progress = Math.min(Math.abs(dx) / 150, 1);
+    if (dragBehindCard) {
+      var bScale = POS[1].scale + progress * (POS[0].scale - POS[1].scale);
+      var bY = POS[1].y + progress * (POS[0].y - POS[1].y);
+      dragBehindCard.style.transform = 'translate(-50%, 0) translateY(' + bY + 'px) scale(' + bScale + ')';
+    }
+    if (dragThirdCard) {
+      var tScale = POS[2].scale + progress * (POS[1].scale - POS[2].scale);
+      var tY = POS[2].y + progress * (POS[1].y - POS[2].y);
+      dragThirdCard.style.transform = 'translate(-50%, 0) translateY(' + tY + 'px) scale(' + tScale + ')';
+    }
+  }, { passive: false });
+
+  stackContainer.addEventListener('touchend', function (e) {
+    if (!isDragging || !dragFrontCard) {
+      dragFrontCard = null;
+      dragBehindCard = null;
+      dragThirdCard = null;
+      return;
+    }
+
+    var dx = dragDeltaX;
+    var elapsed = Date.now() - touchStartTime;
+    var velocity = elapsed > 0 ? Math.abs(dx) / elapsed : 0;
+
+    suppressClick = true;
+    setTimeout(function () { suppressClick = false; }, 400);
+
+    var shouldFly = Math.abs(dx) > 80 || (Math.abs(dx) > 40 && velocity > 0.3);
+    var direction = dx < 0 ? -1 : 1;
+    var canNav = direction < 0
+      ? (windowStart < deck.length - 1)
+      : (windowStart > 0);
+
+    if (shouldFly && canNav) {
+      // ── Fly off screen ──
+      var exitCard = dragFrontCard;
+      exitCard.classList.add('exiting');
+      exitCard.style.zIndex = '10';
+      exitCard.style.pointerEvents = 'none';
+      stackContainer.style.overflow = 'visible';
+
+      var flyX = direction * window.innerWidth;
+      var flyRot = direction * 12;
+      exitCard.style.transition = 'transform 300ms cubic-bezier(0.16, 1, 0.3, 1), opacity 250ms ease';
+      exitCard.style.transform = 'translate(-50%, 0) translateX(' + flyX + 'px) translateY(' + POS[0].y + 'px) scale(1) rotate(' + flyRot + 'deg)';
+      exitCard.style.opacity = '0';
+
+      isAnimating = true;
+      flipped = false;
+
+      if (direction < 0) windowStart++;
+      else windowStart--;
+
+      if (dragBehindCard) dragBehindCard.style.transition = '';
+      if (dragThirdCard) dragThirdCard.style.transition = '';
+
+      render();
+
+      setTimeout(function () {
+        if (exitCard.parentNode) exitCard.parentNode.removeChild(exitCard);
+        stackContainer.style.overflow = 'hidden';
+        isAnimating = false;
+      }, 320);
+
+    } else {
+      // ── Snap back to center ──
+      dragFrontCard.style.transition = 'transform 400ms cubic-bezier(0.22, 1, 0.36, 1), opacity 400ms ease';
+      dragFrontCard.style.transform = 'translate(-50%, 0) translateY(' + POS[0].y + 'px) scale(1)';
+      dragFrontCard.style.opacity = '1';
+
+      if (dragBehindCard) {
+        dragBehindCard.style.transition = 'transform 400ms cubic-bezier(0.22, 1, 0.36, 1)';
+        dragBehindCard.style.transform = 'translate(-50%, 0) translateY(' + POS[1].y + 'px) scale(' + POS[1].scale + ')';
+      }
+      if (dragThirdCard) {
+        dragThirdCard.style.transition = 'transform 400ms cubic-bezier(0.22, 1, 0.36, 1)';
+        dragThirdCard.style.transform = 'translate(-50%, 0) translateY(' + POS[2].y + 'px) scale(' + POS[2].scale + ')';
+      }
+
+      var fc = dragFrontCard, bc = dragBehindCard, tc = dragThirdCard;
+      setTimeout(function () {
+        if (fc) { fc.style.transition = ''; fc.style.willChange = ''; }
+        if (bc) bc.style.transition = '';
+        if (tc) tc.style.transition = '';
+      }, 420);
+    }
+
+    dragFrontCard = null;
+    dragBehindCard = null;
+    dragThirdCard = null;
+    isDragging = false;
+  });
+
+  // ─── Minimap ───
+  function buildMinimap() {
+    if (!sortedAllCards.length) return;
+    var total = sortedAllCards.length;
+
+    // Compute letter positions
+    var letterMap = {};
+    for (var i = 0; i < total; i++) {
+      var ch = sortedAllCards[i].word[0].toUpperCase();
+      if (!(ch in letterMap)) letterMap[ch] = i;
+    }
+
+    var letters = Object.keys(letterMap).sort();
+    minimapItems = [];
+
+    // Place letter markers, skip if too close
+    var lastPct = -Infinity;
+    for (var li = 0; li < letters.length; li++) {
+      var letter = letters[li];
+      var idx = letterMap[letter];
+      var pct = (idx / (total - 1)) * 100;
+
+      // Skip if within ~3% of previous (avoids overlap)
+      if (pct - lastPct < 3 && li > 0) continue;
+
+      var el = document.createElement('div');
+      el.className = 'minimap-letter';
+      el.textContent = letter;
+      el.style.top = pct + '%';
+      minimapTrack.appendChild(el);
+      minimapItems.push({ el: el, pct: pct, baseOpacity: 0.25 });
+      lastPct = pct;
+    }
+
+    // Tick marks (every 10 cards)
+    for (var ti = 0; ti < total; ti += 10) {
+      var pct = (ti / (total - 1)) * 100;
+      var tick = document.createElement('div');
+      tick.className = 'minimap-tick';
+      tick.style.top = pct + '%';
+      minimapTrack.appendChild(tick);
+      minimapItems.push({ el: tick, pct: pct, baseOpacity: 0.08 });
+    }
+
+    // Position indicator
+    minimapPos = document.createElement('div');
+    minimapPos.className = 'minimap-pos';
+    minimapTrack.appendChild(minimapPos);
+
+    // Show minimap
+    minimapEl.classList.add('visible');
+  }
+
+  // Hover: proximity brightening + tooltip
+  minimapTrack.addEventListener('mousemove', function (e) {
+    var rect = minimapTrack.getBoundingClientRect();
+    var y = e.clientY - rect.top;
+    var trackH = rect.height;
+    var mousePct = (y / trackH) * 100;
+
+    // Brighten nearby items
+    for (var i = 0; i < minimapItems.length; i++) {
+      var item = minimapItems[i];
+      var distPx = Math.abs((item.pct - mousePct) / 100 * trackH);
+      if (distPx < 30) {
+        var boost = (1 - distPx / 30) * 0.3;
+        item.el.style.opacity = (item.baseOpacity + boost).toString();
+      } else {
+        item.el.style.opacity = item.baseOpacity.toString();
+      }
+    }
+
+    // Tooltip
+    var total = sortedAllCards.length;
+    var idx = Math.round((y / trackH) * (total - 1));
+    idx = Math.max(0, Math.min(total - 1, idx));
+    minimapTooltip.textContent = sortedAllCards[idx].word;
+    minimapTooltip.style.top = y + 'px';
+    minimapTooltip.style.opacity = '1';
+  });
+
+  minimapTrack.addEventListener('mouseleave', function () {
+    for (var i = 0; i < minimapItems.length; i++) {
+      minimapItems[i].el.style.opacity = minimapItems[i].baseOpacity.toString();
+    }
+    minimapTooltip.style.opacity = '0';
+  });
+
+  // Click: jump to card (switch to alpha if needed)
+  minimapTrack.addEventListener('click', function (e) {
+    var rect = minimapTrack.getBoundingClientRect();
+    var y = e.clientY - rect.top;
+    var total = sortedAllCards.length;
+    var idx = Math.round((y / rect.height) * (total - 1));
+    idx = Math.max(0, Math.min(total - 1, idx));
+
+    if (sortMode !== 'alpha') {
+      sortMode = 'alpha';
+      deck = allCards.slice().sort(function (a, b) {
+        return a.word.localeCompare(b.word, undefined, { sensitivity: 'base' });
+      });
+      updateSortButtons();
+    }
+
+    jumpTo(idx);
+  });
+
   // ─── Load data ───
   fetch('flashcard-data.json')
     .then(function (res) { return res.json(); })
     .then(function (data) {
       allCards = data.cards;
+
+      // Build sorted reference for minimap
+      sortedAllCards = allCards.slice().sort(function (a, b) {
+        return a.word.localeCompare(b.word, undefined, { sensitivity: 'base' });
+      });
+      wordToSortedIdx = {};
+      for (var i = 0; i < sortedAllCards.length; i++) {
+        wordToSortedIdx[sortedAllCards[i].word] = i;
+      }
+
       deck = shuffle(allCards);
       loadingMsg.style.display = 'none';
       progressArea.style.visibility = 'visible';
+      buildMinimap();
       render();
     })
     .catch(function (err) {
@@ -574,5 +1071,6 @@
 })();
 </script>
 
+<script src="/analytics.js" defer></script>
 </body>
 </html>
